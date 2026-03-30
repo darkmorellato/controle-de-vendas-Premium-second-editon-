@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { storageService } from '../services/storageService.js';
 
 export const useLocalStorage = (key, initialValue) => {
@@ -167,7 +167,14 @@ export const usePagination = (data, initialPageSize = 10) => {
     const goToPage = useCallback((page) => setCurrentPage(Math.max(1, Math.min(page, totalPages))), [totalPages]);
     const nextPage = useCallback(() => goToPage(currentPage + 1), [currentPage, goToPage]);
     const prevPage = useCallback(() => goToPage(currentPage - 1), [currentPage, goToPage]);
-    useEffect(() => setCurrentPage(1), [data.length]);
+    // Resetar página quando o tamanho dos dados muda
+    const prevLengthRef = useRef(data.length);
+    useEffect(() => {
+        if (data.length !== prevLengthRef.current) {
+            prevLengthRef.current = data.length;
+            setCurrentPage(1);
+        }
+    }, [data.length]);
     return { currentPage, pageSize, totalPages, paginatedData, goToPage, nextPage, prevPage, setPageSize, hasNextPage: currentPage < totalPages, hasPrevPage: currentPage > 1 };
 };
 

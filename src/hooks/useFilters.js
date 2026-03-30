@@ -110,7 +110,15 @@ export function useFilters(sales, clients = []) {
       }));
   }, [paginatedSales, groupBy]);
 
-  useEffect(() => setCurrentPage(1), [filterDate, debouncedSearch]);
+  // Resetar página quando filtros mudam
+  const prevFilterRef = useRef({ filterDate, debouncedSearch });
+  useEffect(() => {
+    const prev = prevFilterRef.current;
+    if (prev.filterDate !== filterDate || prev.debouncedSearch !== debouncedSearch) {
+      prevFilterRef.current = { filterDate, debouncedSearch };
+      setCurrentPage(1);
+    }
+  }, [filterDate, debouncedSearch]);
 
   useEffect(() => {
     const handleBeforePrint = () => setItemsPerPage(10_000);
