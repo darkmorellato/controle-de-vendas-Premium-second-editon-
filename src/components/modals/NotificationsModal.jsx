@@ -1,30 +1,35 @@
+import { useMemo, useEffect } from 'react';
 import Icons from '../Icons.jsx';
-import { useMemo } from 'react';
 
-export default function NotificationsModal({ isOpen, onClose, sales, settings, clients, todayBirthdays, reminders, GOAL_SELLERS, GOAL_MANAGER, ELIGIBLE_FOR_GOAL, onGoToCalendar }) {
-    if (!isOpen) return null;
+/**
+ * Modal de Notificações consolidado (corrigido para seguir Rules of Hooks e performance)
+ */
+export default function NotificationsModal({ 
+    isOpen, onClose, sales, settings, clients, reminders, 
+    GOAL_SELLERS, GOAL_MANAGER, ELIGIBLE_FOR_GOAL, onGoToCalendar 
+}) {
+    // BUG-FIX: Hooks devem ser chamados antes de qualquer return condicional
+    const todayData = useMemo(() => {
+        const d = new Date();
+        return {
+            obj: d,
+            month: d.getMonth(),
+            year: d.getFullYear(),
+            str: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+            date: d.getDate()
+        };
+    }, []);
 
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const now = todayData.obj;
+    const currentMonth = todayData.month;
+    const currentYear = todayData.year;
     const isManager = settings.employeeName === "Sabrina Almeida";
     const myTarget = isManager ? GOAL_MANAGER : GOAL_SELLERS;
     const monthNames = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-    const sellerSales = sales.filter(s => {
-        const d = new Date((s.date||'') + 'T00:00:00');
-        return s.employeeName === settings.employeeName && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    });
-    const units = sellerSales.reduce((acc, s) => {
-        const pos = (s.items||[]).filter(i => ELIGIBLE_FOR_GOAL.includes(i.type) && i.unitPrice > 0);
-        const neg = (s.items||[]).filter(i => ELIGIBLE_FOR_GOAL.includes(i.type) && i.unitPrice < 0);
-        return acc + pos.reduce((sum,i)=>sum+i.quantity,0) - neg.reduce((sum,i)=>sum+Math.abs(i.quantity),0);
-    }, 0);
-    const remaining = Math.max(0, myTarget - units);
-    const progress = Math.min((units / myTarget) * 100, 100);
-
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const todayReminders = reminders.filter(r => r.date === todayStr && !r.completed);
+    const todayReminders = useMemo(() => {
+        return reminders.filter(r => r.date === todayData.str && !r.completed);
+    }, [reminders, todayData.str]);
 
     const parseDob = (dob) => {
         if (!dob) return { mm: null, dd: null };
@@ -80,11 +85,11 @@ export default function NotificationsModal({ isOpen, onClose, sales, settings, c
         SELLERS_LIST.forEach(seller => {
             const isMgr = seller === "Sabrina Almeida";
             const target = isMgr ? GOAL_MANAGER : GOAL_SELLERS;
-            const sellerSales = sales.filter(s => {
+            const sellerSalesFiltered = sales.filter(s => {
                 const d = new Date((s.date || '') + 'T00:00:00');
                 return s.employeeName === seller && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
             });
-            const sold = sellerSales.reduce((acc, s) => {
+            const sold = sellerSalesFiltered.reduce((acc, s) => {
                 const pos = (s.items||[]).filter(i => ELIGIBLE_FOR_GOAL.includes(i.type) && i.unitPrice > 0);
                 const neg = (s.items||[]).filter(i => ELIGIBLE_FOR_GOAL.includes(i.type) && i.unitPrice < 0);
                 return acc + pos.reduce((sum,i)=>sum+i.quantity,0) - neg.reduce((sum,i)=>sum+Math.abs(i.quantity),0);
@@ -105,9 +110,19 @@ export default function NotificationsModal({ isOpen, onClose, sales, settings, c
             });
         });
         return result;
-    }, [sales, currentMonth, currentYear, now]);
+    }, [sales, currentMonth, currentYear, now, GOAL_MANAGER, GOAL_SELLERS, ELIGIBLE_FOR_GOAL]);
 
     const hasNoNotifications = upcomingBirthdays.length === 0 && todayReminders.length === 0 && recentClients.length === 0 && sellerGoals.every(g => !g.needsAttention);
+
+    // ESC para fechar
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg animate-in fade-in duration-500" onClick={onClose}>
