@@ -1,0 +1,249 @@
+// Miplace Premium - SCSS Variables and Mixins
+// Complementary to Tailwind CSS
+
+// ============================================
+// VARIABLES
+// ============================================
+
+// Brand Colors
+$brand-gold: #c9a227;
+$brand-gold-light: #e4ba4a;
+$brand-gold-dark: #886918;
+$brand-black: #0f0f0f;
+$brand-dark: #1a1a1a;
+$brand-dark-tertiary: #2d2d2d;
+
+// Semantic Colors
+$color-success: #22c55e;
+$color-warning: #f59e0b;
+$color-error: #ef4444;
+$color-info: #3b82f6;
+
+// Typography
+$font-primary: 'Plus Jakarta Sans', sans-serif;
+$font-display: 'Playfair Display', serif;
+
+// Spacing
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+$spacing-2xl: 3rem;
+
+// Border Radius
+$radius-sm: 0.5rem;
+$radius-md: 1rem;
+$radius-lg: 1.5rem;
+$radius-xl: 2rem;
+$radius-full: 9999px;
+
+// Shadows
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+$shadow-glow: 0 0 20px rgba($brand-gold, 0.3);
+$shadow-glow-strong: 0 0 40px rgba($brand-gold, 0.5);
+
+// Transitions
+$transition-fast: 150ms ease;
+$transition-normal: 300ms ease;
+$transition-slow: 500ms ease;
+
+// Breakpoints
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+
+// Z-Index
+$z-dropdown: 100;
+$z-modal: 200;
+$z-toast: 300;
+$z-tooltip: 400;
+
+// ============================================
+// MIXINS
+// ============================================
+
+// Flexbox shortcuts
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Responsive breakpoints
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == 'sm' {
+    @media (min-width: $breakpoint-sm) { @content; }
+  } @else if $breakpoint == 'md' {
+    @media (min-width: $breakpoint-md) { @content; }
+  } @else if $breakpoint == 'lg' {
+    @media (min-width: $breakpoint-lg) { @content; }
+  } @else if $breakpoint == 'xl' {
+    @media (min-width: $breakpoint-xl) { @content; }
+  }
+}
+
+// Card style
+@mixin card($padding: $spacing-lg, $radius: $radius-xl) {
+  background: linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius;
+  padding: $padding;
+}
+
+// Gold button style
+@mixin btn-gold {
+  background: linear-gradient(135deg, $brand-gold, $brand-gold-light);
+  color: $brand-black;
+  font-weight: 700;
+  border: none;
+  border-radius: $radius-xl;
+  padding: $spacing-md $spacing-xl;
+  transition: all $transition-normal;
+  cursor: pointer;
+  
+  &:hover {
+    background: linear-gradient(135deg, $brand-gold-light, $brand-gold);
+    box-shadow: $shadow-glow;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// Glass effect
+@mixin glass-effect {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+// Text gradient
+@mixin text-gradient($direction: to right) {
+  background: linear-gradient($direction, $brand-gold, $brand-gold-light);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Scrollbar styling
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba($brand-gold, 0.3);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba($brand-gold, 0.5);
+    }
+  }
+}
+
+// Animation keyframes
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba($brand-gold, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba($brand-gold, 0.6);
+  }
+}
+
+// ============================================
+// PLACEHOLDERS
+// ============================================
+
+%text-gradient {
+  @include text-gradient;
+}
+
+%card-style {
+  @include card;
+}
+
+%flex-center {
+  @include flex-center;
+}
+
+// ============================================
+// OUTPUT CLASSES
+// ============================================
+
+// Button variants
+.btn-gold-scss {
+  @include btn-gold;
+}
+
+// Glass card
+.glass-card {
+  @include card;
+  @include glass-effect;
+}
+
+// Flex utilities
+.flex-center {
+  @include flex-center;
+}
+
+.flex-between {
+  @include flex-between;
+}
+
+// Custom scrollbar
+.custom-scroll {
+  @include custom-scrollbar;
+}
+
+// Animations
+.animate-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

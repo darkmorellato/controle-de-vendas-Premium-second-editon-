@@ -1,0 +1,535 @@
+
+        /* Fonte numérica com zero recortado para melhor legibilidade 0 vs 8 */
+        .font-mono {
+            font-variant-numeric: slashed-zero;
+            font-feature-settings: "zero" 1;
+        }
+
+        /* ============================================
+           TEMA CHAMPAGNE & NOIR • Boutique Edition
+           Background: warm beige/off-white
+           Panels: crisp white / ivory
+           Buttons: champagne gold metallic + black text
+           Accents: pure black borders, black typography
+        ============================================ */
+
+        :root {
+            --bg-base: #f5f0e8;
+            /* warm beige */
+            --bg-card: #fdfaf4;
+            /* ivory white */
+            --bg-card-alt: #f9f5ed;
+            /* off-white */
+            --noir: #0f0f0f;
+            /* rich black */
+            --noir-soft: #1c1c1c;
+            --noir-muted: #3a3633;
+            /* dark warm-grey */
+            --noir-subtle: #6b6560;
+            /* medium warm-grey */
+            --border: rgba(15, 15, 15, 0.12);
+            /* ultra-thin black border */
+            --border-dark: rgba(15, 15, 15, 0.22);
+            --champagne: #c9a227;
+            /* champagne gold core */
+            --champagne-lt: #e8c84e;
+            --champagne-dk: #8a6d18;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image:
+                radial-gradient(ellipse at 10% 10%, rgba(201, 162, 39, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 90%, rgba(201, 162, 39, 0.04) 0%, transparent 50%);
+            color: var(--noir);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* --- Classic Frame (light panels) --- */
+        .classic-frame {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-dark);
+            box-shadow:
+                0 2px 12px rgba(0, 0, 0, 0.06),
+                0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        /* subtle top-edge shimmer */
+        .classic-frame::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(160deg, rgba(201, 162, 39, 0.22) 0%, transparent 60%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* --- Inputs / Selects --- */
+        input,
+        select,
+        textarea {
+            background-color: #ffffff !important;
+            border: 1px solid var(--border-dark) !important;
+            color: var(--noir) !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        input:focus,
+        select:focus {
+            background-color: #ffffff !important;
+            border-color: var(--champagne) !important;
+            box-shadow:
+                0 0 0 3px rgba(201, 162, 39, 0.15),
+                inset 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        input::placeholder {
+            color: rgba(15, 15, 15, 0.35);
+        }
+
+        /* --- Champagne Gold Metallic Button --- */
+        .btn-gold {
+            background: linear-gradient(110deg,
+                    #886918 0%,
+                    #c9a227 18%,
+                    #f5e4ab 40%,
+                    #fff8e7 50%,
+                    #f5e4ab 60%,
+                    #c9a227 82%,
+                    #886918 100%);
+            background-size: 200% auto;
+            color: #0f0f0f;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.09em;
+            border: 1.5px solid rgba(15, 15, 15, 0.55);
+            box-shadow:
+                0 2px 8px rgba(201, 162, 39, 0.20),
+                inset 0 1px 0 rgba(255, 255, 255, 0.60);
+            transition: background-position 0.35s ease, box-shadow 0.2s ease, transform 0.15s ease;
+        }
+
+        .btn-gold:hover {
+            background-position: right center;
+            transform: translateY(-2px) scale(1.015);
+            box-shadow:
+                0 8px 24px rgba(201, 162, 39, 0.30),
+                inset 0 1px 0 rgba(255, 255, 255, 0.70);
+            border-color: rgba(15, 15, 15, 0.70);
+        }
+
+        .btn-gold:active {
+            transform: scale(0.975);
+            box-shadow: 0 1px 4px rgba(201, 162, 39, 0.15);
+        }
+
+        /* --- Glass / Glass-dark (repurposed to light) --- */
+        .glass {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-dark);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+        }
+
+        .glass-dark {
+            position: relative;
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border-dark);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+        }
+
+        /* --- Scrollbar • thin champagne on cream --- */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #c9a227, #e4ba4a, #c9a227);
+            border-radius: 4px;
+            border: 1px solid var(--bg-base);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--champagne);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(201, 162, 39, 0.4);
+        }
+
+        /* --- Headings --- */
+        h1,
+        h2,
+        h3,
+        .font-display {
+            font-family: 'Playfair Display', serif;
+            letter-spacing: -0.02em;
+            color: var(--noir);
+        }
+
+        /* --- Tailwind overrides for dark-mode classes used inline --- */
+        /* Remap text-slate-* to dark noir tones */
+        .text-slate-200 {
+            color: #1c1c1c !important;
+        }
+
+        .text-slate-300 {
+            color: #2e2b27 !important;
+        }
+
+        .text-slate-400 {
+            color: #4a4640 !important;
+        }
+
+        .text-slate-500 {
+            color: #6b6560 !important;
+        }
+
+        .text-white {
+            color: #0f0f0f !important;
+        }
+
+        /* Cards that used bg-black / bg-onyx ? ivory */
+        .bg-black,
+        .bg-onyx-950,
+        .bg-onyx-900,
+        .bg-onyx-800 {
+            background-color: var(--bg-card) !important;
+        }
+
+        /* border-white/* ? thin black border */
+        [class*="border-white"] {
+            border-color: var(--border) !important;
+        }
+
+        /* bg-white/* overlays ? very light beige */
+        .bg-white\/5 {
+            background-color: rgba(15, 15, 15, 0.03) !important;
+        }
+
+        .bg-white\/10 {
+            background-color: rgba(15, 15, 15, 0.05) !important;
+        }
+
+        .bg-white\/20 {
+            background-color: rgba(15, 15, 15, 0.08) !important;
+        }
+
+        /* Nav / header area */
+        nav,
+        header,
+        .navbar {
+            background: var(--bg-card) !important;
+            border-color: var(--border-dark) !important;
+        }
+
+        /* --- Impressão A4 • Apenas Tabela de Vendas em Preto e Branco --- */
+        @media print {
+            @page {
+                margin: 10mm 10mm;
+                size: A4 portrait;
+            }
+
+            /* Reset body and html */
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                height: auto !important;
+            }
+
+            /* Hide everything by default but collapse space */
+            body * {
+                visibility: hidden !important;
+            }
+
+            /* Collapse height of main wrappers so they don't create blank pages */
+            #root,
+            .min-h-screen,
+            .relative.pt-6 {
+                height: 0 !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            /* Revelar apenas a Área de vendas e posicionar no topo */
+            .print-sales-area,
+            .print-sales-area * {
+                visibility: visible !important;
+            }
+
+            .print-sales-area {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+                z-index: 9999 !important;
+            }
+
+            /* Forçar Preto e Branco (sem cores) */
+            .print-sales-area * {
+                color: #000 !important;
+                background: transparent !important;
+                background-color: transparent !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+            }
+
+            /* Cabeçalho do relatório */
+            .print-header {
+                visibility: visible !important;
+                display: block !important;
+                height: auto !important;
+                text-align: center !important;
+                margin-bottom: 6mm !important;
+                padding-bottom: 4mm !important;
+                border-bottom: 1px solid #000 !important;
+            }
+
+            /* Espaçamento entre grupos */
+            .print-sales-area .space-y-10>div+div {
+                margin-top: 6mm !important;
+            }
+
+            /* Tabela principal */
+            table.sales-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 10px !important;
+                font-family: Arial, sans-serif !important;
+                table-layout: fixed !important;
+                page-break-inside: auto !important;
+            }
+
+            table.sales-table tr {
+                page-break-inside: avoid !important;
+            }
+
+            /* Cabeçalhos */
+            table.sales-table thead tr {
+                border-bottom: 2px solid #000 !important;
+            }
+
+            table.sales-table th {
+                padding: 4px 5px !important;
+                font-size: 8px !important;
+                font-weight: 900 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.05em !important;
+                color: #000 !important;
+                background: transparent !important;
+                border: none !important;
+                vertical-align: bottom !important;
+            }
+
+            /* Células */
+            table.sales-table td {
+                padding: 5px 5px !important;
+                border: none !important;
+                color: #0f0f0f !important;
+                background: transparent !important;
+                vertical-align: top !important;
+                font-size: 9px !important;
+                line-height: 1.4 !important;
+                overflow: visible !important;
+                white-space: normal !important;
+                word-break: break-word !important;
+            }
+
+            /* Separador fino entre linhas */
+            table.sales-table tbody tr {
+                border-bottom: 1px solid #ccc !important;
+            }
+
+            table.sales-table tbody tr:last-child {
+                border-bottom: none !important;
+            }
+
+            /* -- Larguras A4 portrait (176mm úteis aprox) -- */
+            /* Cliente */
+            table.sales-table th:nth-child(1),
+            table.sales-table td:nth-child(1) {
+                width: 17% !important;
+            }
+
+            /* Itens & Detalhes */
+            table.sales-table th:nth-child(2),
+            table.sales-table td:nth-child(2) {
+                width: 36% !important;
+            }
+
+            /* Vendedor */
+            table.sales-table th:nth-child(3),
+            table.sales-table td:nth-child(3) {
+                width: 9% !important;
+                text-align: center !important;
+            }
+
+            /* Pagamento */
+            table.sales-table th:nth-child(4),
+            table.sales-table td:nth-child(4) {
+                width: 24% !important;
+            }
+
+            /* Total Pago */
+            table.sales-table th:nth-child(5),
+            table.sales-table td:nth-child(5) {
+                width: 14% !important;
+                text-align: right !important;
+            }
+
+            /* Ocultar coluna de ações */
+            table.sales-table th:nth-child(6),
+            table.sales-table td:nth-child(6) {
+                display: none !important;
+            }
+
+            /* Revelar elementos ocultos por hover */
+            .opacity-0 {
+                opacity: 1 !important;
+            }
+
+            [class*="translate-x"] {
+                transform: none !important;
+            }
+
+            /* Remover todos os estilos decorativos das células */
+            table.sales-table td * {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+
+            /* Total Pago: texto grande e limpo */
+            table.sales-table td:nth-child(5)>span:first-child {
+                font-weight: 900 !important;
+                font-size: 11px !important;
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                white-space: nowrap !important;
+            }
+
+            /* Remover wrapper visual azul da tabela */
+            .print-sales-area>div>div>div>div[class*="bg-"] {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                overflow: visible !important;
+            }
+
+            /* Linha de data do grupo */
+            .print-sales-area .flex.justify-between.items-end {
+                border-left: 2px solid #000 !important;
+                padding: 2px 6px !important;
+                margin-bottom: 2mm !important;
+                background: transparent !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+
+            /* Ocultar paginação */
+            .print-sales-area .flex.justify-center.items-center {
+                display: none !important;
+            }
+        }
+
+        @keyframes loginSweep {
+            0%   { background-position: 200% center; }
+            100% { background-position: -200% center; }
+        }
+
+        @keyframes notifGlow {
+            0%   { box-shadow: 0 0 0px 0px rgba(201,162,39,0); }
+            50%  { box-shadow: 0 0 14px 5px rgba(201,162,39,0.55), 0 0 30px 8px rgba(201,162,39,0.2); }
+            100% { box-shadow: 0 0 0px 0px rgba(201,162,39,0); }
+        }
+        .notif-glow {
+            animation: notifGlow 2s ease-in-out infinite;
+        }
+            background-color: #fdfaf4;
+            color: #0f0f0f;
+        }
+
+        /* --- Performance hints --- */
+        [class*="sticky"] {
+            will-change: transform;
+        }
+
+        .classic-frame {
+            contain: layout style;
+        }
+
+        /* Reduce blur cost on decorative elements */
+        .blur-3xl {
+            filter: blur(40px);
+        }
+
+        .blur-2xl {
+            filter: blur(24px);
+        }
+
+        /* Disable pointer-events on decorative blobs */
+        .absolute.blur-3xl,
+        .absolute.blur-2xl {
+            pointer-events: none;
+        }
+
+        /* GPU-accelerate modals */
+        .fixed[class*="z-["] {
+            will-change: opacity, transform;
+            transform: translateZ(0);
+        }
+
+        /* Reduce transition cost on list items - use shorter durations */
+        .space-y-10>div,
+        .space-y-8>div {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        /* Prevent layout thrash on scrollable containers */
+        .overflow-y-auto {
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Contain list items for faster paint */
+        .paginatedSale {
+            contain: content;
+        }
+
+        /* Reduce animations for users who prefer it */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    
