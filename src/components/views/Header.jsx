@@ -10,7 +10,6 @@ export default function Header({
     currentView,
     setCurrentView,
     setLogoutModalOpen,
-    setCommissionModalOpen,
     isNotificationsDropdownOpen,
     setIsNotificationsDropdownOpen,
     setIsHelpDropdownOpen,
@@ -95,7 +94,7 @@ export default function Header({
                     <div style={{ width:'48px', height:'48px', borderRadius:'50%', overflow:'hidden', border:'2px solid rgba(201,162,39,0.5)', boxShadow:'0 0 0 3px rgba(201,162,39,0.1), 0 2px 12px rgba(201,162,39,0.2)', background:'#111', flexShrink:0, transition:'transform 0.3s ease, box-shadow 0.3s ease', cursor:'default' }}
                         onMouseEnter={e=>{ e.currentTarget.style.transform='scale(1.08)'; e.currentTarget.style.boxShadow='0 0 0 3px rgba(201,162,39,0.25), 0 4px 20px rgba(201,162,39,0.35)'; }}
                         onMouseLeave={e=>{ e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.boxShadow='0 0 0 3px rgba(201,162,39,0.1), 0 2px 12px rgba(201,162,39,0.2)'; }}>
-                        <img src="logo.png" alt="Logo" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}
+                        <img src="/logo.png" alt="Logo" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}
                             onError={e=>{
                                 const img = e.target; const parent = img.parentElement;
                                 img.style.display = 'none';
@@ -259,7 +258,7 @@ export default function Header({
                                     ))}
                                 </div>
                                 <div className="p-3 border-t border-[#c9a227]/30 bg-gradient-to-r from-[#c9a227]/15 to-transparent text-center">
-                                    <p className="text-[10px] text-[#8b6914]/80 font-bold uppercase tracking-widest">Miplace Premium v3.1</p>
+                                    <p className="text-[10px] text-[#8b6914]/80 font-bold uppercase tracking-widest">Miplace Premium {APP_VERSION}</p>
                                 </div>
                             </div>
                         )}

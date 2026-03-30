@@ -96,7 +96,7 @@ export default function LoginScreen({
                                 {/* Anel pulsante */}
                                 <div className="absolute inset-0 rounded-full opacity-20" style={{ background: '#c9a227', animation: 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite' }}></div>
                                 <div style={{ width:'88px', height:'88px', borderRadius:'50%', overflow:'hidden', border:'2.5px solid rgba(201,162,39,0.55)', boxShadow:'0 0 0 4px rgba(201,162,39,0.12), 0 4px 20px rgba(201,162,39,0.25), inset 0 0 20px rgba(201,162,39,0.1)', background:'#111' }}>
-                                    <img src="logo.png" alt="Miplace Logo"
+                                    <img src="/logo.png" alt="Miplace Logo"
                                         style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}
                                         onError={e => {
                                             const img = e.target; const parent = img.parentElement;

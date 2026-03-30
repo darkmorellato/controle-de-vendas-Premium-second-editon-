@@ -20,7 +20,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt, onPrint, format
 
                     <div className="text-center relative overflow-hidden" style={{ background: '#f9f6f0', padding: '36px 24px 20px', borderBottom: '1.5px dashed rgba(15,15,15,0.12)' }}>
                         <div style={{ width: '72px', height: '72px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(15,15,15,0.15)', margin: '0 auto 14px', background: '#111', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}>
-                            <img src="logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                 onError={e => {
                                 const img = e.target; const parent = img.parentElement;
                                 img.style.display = 'none';
