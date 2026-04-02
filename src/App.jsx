@@ -81,6 +81,8 @@ const App = () => {
   const [monthFilter, setMonthFilter] = useState('todos');
   const currentMonth = new Date().toISOString().substring(0, 7); // "2026-04"
   const [referralsMonthFilter, setReferralsMonthFilter] = useState(currentMonth);
+  const [performanceMonthFilter, setPerformanceMonthFilter] = useState(currentMonth);
+  const performanceAvailableMonths = ['2026-04', '2026-03'];
   const [alertModalOpen, setAlertModalOpen] = useState(false);
   const [alertData, setAlertData] = useState({ message: '', phase: '' });
   const [lastAlertTime, setLastAlertTime] = useState(0);
@@ -738,7 +740,7 @@ const App = () => {
           </Suspense>
         ) : currentViewState === 'performance' ? (
           <Suspense fallback={<PageLoader />}>
-            <PerformanceView sales={sales} clients={clients} settings={authState.settings} formatCurrency={formatCurrency} monthlyChartData={notifications.monthlyChartData} setCommissionModalOpen={() => openModal('commission')} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} />
+            <PerformanceView sales={sales} clients={clients} settings={authState.settings} formatCurrency={formatCurrency} monthlyChartData={notifications.monthlyChartData} setCommissionModalOpen={() => openModal('commission')} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} performanceMonthFilter={performanceMonthFilter} setPerformanceMonthFilter={setPerformanceMonthFilter} performanceAvailableMonths={performanceAvailableMonths} />
           </Suspense>
         ) : (
           <Suspense fallback={<PageLoader />}>
@@ -809,7 +811,7 @@ const App = () => {
         <BirthdayAlertModalLazy isOpen={notifications.todayBirthdays.length > 0 && modals.birthdayAlert?.open} onClose={() => closeModal('birthdayAlert')} todayBirthdays={notifications.todayBirthdays} />
       </Suspense>
       <Suspense fallback={null}>
-        <CommissionModalLazy isOpen={modals.commission?.open} onClose={() => closeModal('commission')} sales={sales} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} formatCurrency={formatCurrency} />
+        <CommissionModalLazy isOpen={modals.commission?.open} onClose={() => closeModal('commission')} sales={sales} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} formatCurrency={formatCurrency} performanceMonthFilter={performanceMonthFilter} setPerformanceMonthFilter={setPerformanceMonthFilter} performanceAvailableMonths={performanceAvailableMonths} />
       </Suspense>
       <Suspense fallback={null}>
         <ManagerAuthModalLazy isOpen={modals.managerAuth?.open} onClose={() => closeModal('managerAuth')} managerPassword={managerPassword} setManagerPassword={setManagerPassword} onAuth={handleManagerAuth} pendingAuthAction={pendingAuthAction} />
