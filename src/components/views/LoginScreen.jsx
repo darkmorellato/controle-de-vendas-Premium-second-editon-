@@ -220,7 +220,9 @@ export default function LoginScreen({
                                 className="w-full p-4 pr-12 rounded-[1.5rem] text-center mb-2 font-bold outline-none transition-all text-xl placeholder:font-normal shadow-sm focus:shadow-lg focus:shadow-amber-500/25"
                                 style={{ background: '#fff', border: '1.5px solid rgba(201,162,39,0.35)', color: '#0f0f0f' }} 
                                 placeholder="••••••" 
-                                autoFocus 
+                                autoFocus
+                                autoComplete="off"
+                                spellCheck="false"
                             />
                             <button 
                                 type="button"
