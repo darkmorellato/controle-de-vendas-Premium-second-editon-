@@ -83,6 +83,8 @@ const App = () => {
   const [referralsMonthFilter, setReferralsMonthFilter] = useState(currentMonth);
   const [performanceMonthFilter, setPerformanceMonthFilter] = useState(currentMonth);
   const performanceAvailableMonths = ['2026-04', '2026-03'];
+  const [managerMonthFilter, setManagerMonthFilter] = useState(currentMonth);
+  const managerAvailableMonths = ['2026-04', '2026-03'];
   const [alertModalOpen, setAlertModalOpen] = useState(false);
   const [alertData, setAlertData] = useState({ message: '', phase: '' });
   const [lastAlertTime, setLastAlertTime] = useState(0);
@@ -736,7 +738,7 @@ const App = () => {
           </Suspense>
         ) : currentViewState === 'manager' ? (
           <Suspense fallback={<PageLoader />}>
-            <ManagerView sales={sales} formatCurrency={formatCurrency} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} />
+            <ManagerView sales={sales} formatCurrency={formatCurrency} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} managerMonthFilter={managerMonthFilter} setManagerMonthFilter={setManagerMonthFilter} managerAvailableMonths={managerAvailableMonths} />
           </Suspense>
         ) : currentViewState === 'performance' ? (
           <Suspense fallback={<PageLoader />}>
