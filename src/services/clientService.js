@@ -1,7 +1,7 @@
 import { db } from '../firebase.js';
 import {
   collection, doc, setDoc, updateDoc,
-  query, orderBy, onSnapshot,
+  query, orderBy, onSnapshot, getDocs, getDoc,
 } from 'firebase/firestore';
 
 export const clientService = {
@@ -15,6 +15,19 @@ export const clientService = {
       },
       onError,
     );
+  },
+
+  async getAll() {
+    const q = query(collection(db, 'clientes'), orderBy('name'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  async getById(clientId) {
+    const docRef = doc(db, 'clientes', clientId);
+    const snapshot = await getDoc(docRef);
+    if (!snapshot.exists()) return null;
+    return { id: snapshot.id, ...snapshot.data() };
   },
 
   save(clientData) {

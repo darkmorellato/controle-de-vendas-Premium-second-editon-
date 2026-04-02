@@ -1,7 +1,7 @@
 import { db } from '../firebase.js';
 import {
   collection, doc, setDoc, deleteDoc,
-  query, where, orderBy, onSnapshot,
+  query, where, orderBy, onSnapshot, getDocs,
   writeBatch,
 } from 'firebase/firestore';
 
@@ -31,6 +31,24 @@ export const salesService = {
       },
       onError,
     );
+  },
+
+  async getAll(cutoffStr) {
+    const q = query(
+      collection(db, 'vendas'),
+      where('date', '>=', cutoffStr),
+      orderBy('date', 'desc'),
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  async getById(saleId) {
+    const docRef = doc(db, 'vendas', saleId);
+    const snapshot = await getDocs(query(collection(db, 'vendas'), where('__name__', '==', saleId)));
+    if (snapshot.empty) return null;
+    const d = snapshot.docs[0];
+    return { id: d.id, ...d.data() };
   },
 
   save(saleData) {
