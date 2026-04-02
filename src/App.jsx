@@ -79,6 +79,7 @@ const App = () => {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [sellerFilter, setSellerFilter] = useState('todos');
   const [monthFilter, setMonthFilter] = useState('todos');
+  const [referralsMonthFilter, setReferralsMonthFilter] = useState('todos');
   const [alertModalOpen, setAlertModalOpen] = useState(false);
   const [alertData, setAlertData] = useState({ message: '', phase: '' });
   const [lastAlertTime, setLastAlertTime] = useState(0);
@@ -598,6 +599,17 @@ const App = () => {
     return [...months].sort().reverse();
   }, [clients]);
 
+  const availableReferralMonths = useMemo(() => {
+    const months = new Set();
+    sales.filter(s => s.clientSource && s.clientSource.trim()).forEach(s => {
+      if (s.date) {
+        const month = s.date.substring(0, 7); // "2026-04"
+        months.add(month);
+      }
+    });
+    return [...months].sort().reverse();
+  }, [sales]);
+
   const filteredClients = useMemo(() => {
     let result = clients;
     
@@ -714,7 +726,7 @@ const App = () => {
           </Suspense>
         ) : currentViewState === 'referrals' ? (
           <Suspense fallback={<PageLoader />}>
-            <ReferralsView sales={sales} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
+            <ReferralsView sales={sales} formatCurrency={formatCurrency} formatDateBR={formatDateBR} monthFilter={referralsMonthFilter} setMonthFilter={setReferralsMonthFilter} availableMonths={availableReferralMonths} />
           </Suspense>
         ) : currentViewState === 'manager' ? (
           <Suspense fallback={<PageLoader />}>

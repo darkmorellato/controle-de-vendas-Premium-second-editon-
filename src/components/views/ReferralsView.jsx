@@ -1,6 +1,48 @@
 import Icons from '../Icons.jsx';
+import { useState, useRef, useEffect } from 'react';
+import Portal from '../Portal.jsx';
 
-const ReferralsView = ({ sales, formatCurrency, formatDateBR }) => {
+const MONTH_NAMES = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+const formatMonth = (monthStr) => {
+    if (!monthStr || monthStr === 'todos') return 'Todos os Meses';
+    const [year, month] = monthStr.split('-');
+    const monthIndex = parseInt(month, 10) - 1;
+    return `${MONTH_NAMES[monthIndex]} ${year}`;
+};
+
+const ReferralsView = ({ sales, formatCurrency, formatDateBR, monthFilter, setMonthFilter, availableMonths }) => {
+    const [isMonthFilterOpen, setIsMonthFilterOpen] = useState(false);
+    const monthFilterBtnRef = useRef(null);
+    const [monthFilterPos, setMonthFilterPos] = useState({ right: 0, top: 0 });
+
+    useEffect(() => {
+        if (isMonthFilterOpen && monthFilterBtnRef.current) {
+            const rect = monthFilterBtnRef.current.getBoundingClientRect();
+            setMonthFilterPos({ right: window.innerWidth - rect.right, top: rect.bottom + 8 });
+        }
+    }, [isMonthFilterOpen]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (isMonthFilterOpen && monthFilterBtnRef.current && !monthFilterBtnRef.current.contains(e.target) && !e.target.closest('.referrals-month-filter-dropdown')) {
+                setIsMonthFilterOpen(false);
+            }
+        };
+        if (isMonthFilterOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isMonthFilterOpen]);
+
+    const handleSelectMonth = (month) => {
+        setMonthFilter(month);
+        setIsMonthFilterOpen(false);
+    };
+
     const colorPalette = [
         { from: 'from-amber-600', to: 'to-amber-400', text: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', glow: 'shadow-amber-500/20' },
         { from: 'from-emerald-600', to: 'to-emerald-400', text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', glow: 'shadow-emerald-500/20' },
@@ -26,6 +68,81 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR }) => {
                         </div>
                         Análise de Indicações
                     </h2>
+                    {/* Filtro por Mês */}
+                    <div className="relative">
+                        <button 
+                            ref={monthFilterBtnRef}
+                            type="button"
+                            onClick={() => setIsMonthFilterOpen(!isMonthFilterOpen)}
+                            className={`p-4 rounded-[1.5rem] border transition-all duration-300 flex items-center gap-3 ${
+                                monthFilter !== 'todos' 
+                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-lg shadow-amber-500/20' 
+                                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-amber-500/30 hover:text-amber-400'
+                            }`}
+                            title={monthFilter !== 'todos' ? `Filtrando: ${formatMonth(monthFilter)}` : 'Filtrar por mês'}
+                        >
+                            <Icons.Calendar className="w-5 h-5" />
+                            {monthFilter !== 'todos' && (
+                                <span className="text-sm font-bold">{formatMonth(monthFilter)}</span>
+                            )}
+                            <Icons.ChevronRight className={`w-4 h-4 transition-transform ${isMonthFilterOpen ? 'rotate-90' : ''}`} />
+                        </button>
+
+                        {isMonthFilterOpen && (
+                            <Portal>
+                                <div 
+                                    className="fixed w-80 bg-[#fdfaf4] border-2 border-[#c9a227]/50 rounded-2xl shadow-2xl overflow-hidden z-[9999] referrals-month-filter-dropdown"
+                                    style={{ 
+                                        right: monthFilterPos.right,
+                                        top: monthFilterPos.top,
+                                        boxShadow: '0 10px 40px rgba(201,162,39,0.35), 0 0 60px rgba(201,162,39,0.15)'
+                                    }}
+                                >
+                                    <div className="p-5 border-b border-[#c9a227]/40 bg-gradient-to-r from-[#c9a227]/20 via-[#c9a227]/10 to-transparent">
+                                        <h3 className="font-bold text-[#0f0f0f] text-lg flex items-center gap-2 tracking-wide">
+                                            <Icons.Calendar className="w-5 h-5 text-[#c9a227]" />
+                                            Filtrar por Mês
+                                        </h3>
+                                    </div>
+                                    <div className="py-3 px-2 max-h-80 overflow-y-auto">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelectMonth('todos')}
+                                            className={`w-full px-4 py-4 mx-2 my-1 rounded-xl transition-all hover:bg-[#c9a227]/20 border border-transparent hover:border-[#c9a227]/40 ${
+                                                monthFilter === 'todos' ? 'bg-[#c9a227]/20 border-[#c9a227]/40' : ''
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2.5 bg-[#c9a227]/20 rounded-lg border border-[#c9a227]/40">
+                                                    <Icons.Calendar className="w-5 h-5 text-[#8b6914]" />
+                                                </div>
+                                                <span className={`text-base font-medium ${monthFilter === 'todos' ? 'text-[#c9a227]' : 'text-[#0f0f0f]'}`}>Todos os Meses</span>
+                                            </div>
+                                        </button>
+                                        {availableMonths.map(month => (
+                                            <button
+                                                key={month}
+                                                type="button"
+                                                onClick={() => handleSelectMonth(month)}
+                                                className={`w-full px-4 py-4 mx-2 my-1 rounded-xl transition-all hover:bg-[#c9a227]/20 border border-transparent hover:border-[#c9a227]/40 ${
+                                                    monthFilter === month ? 'bg-[#c9a227]/20 border-[#c9a227]/40' : ''
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2.5 bg-[#c9a227]/20 rounded-lg border border-[#c9a227]/40">
+                                                        <span className="text-sm font-bold text-[#8b6914]">
+                                                            {month.split('-')[1]}/{month.split('-')[0].slice(-2)}
+                                                        </span>
+                                                    </div>
+                                                    <span className={`text-base font-medium ${monthFilter === month ? 'text-[#c9a227]' : 'text-[#0f0f0f]'}`}>{formatMonth(month)}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Portal>
+                        )}
+                    </div>
                 </div>
                 {(() => {
                     const normStr = (s) => s.trim().toLowerCase()
@@ -39,7 +156,13 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR }) => {
                         return new Set(words.length ? words : [normStr(s)]);
                     };
 
-                    const salesWithSource = sales.filter(s => s.clientSource && s.clientSource.trim());
+                    // Filtrar por mês se selecionado
+                    let filteredSales = sales;
+                    if (monthFilter && monthFilter !== 'todos') {
+                        filteredSales = sales.filter(s => s.date && s.date.startsWith(monthFilter));
+                    }
+
+                    const salesWithSource = filteredSales.filter(s => s.clientSource && s.clientSource.trim());
                     const uniqueSrcs = [...new Set(salesWithSource.map(s => s.clientSource.trim()))];
                     const kwMap = {};
                     uniqueSrcs.forEach(s => { kwMap[s] = extractKw(s); });
@@ -106,7 +229,7 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR }) => {
 
                     const totalReferrals = salesWithSource.length;
                     const totalRevenue = salesWithSource.reduce((a, s) => a + (s.amountPaid || s.amount || 0), 0);
-                    const allRevenue = sales.reduce((a, s) => a + (s.amountPaid || s.amount || 0), 0);
+                    const allRevenue = filteredSales.reduce((a, s) => a + (s.amountPaid || s.amount || 0), 0);
                     const sources = Object.entries(sourceMap).sort((a, b) => b[1].count - a[1].count);
                     const topSource = sources[0] ? sources[0][0] : '—';
                     const maxCount = sources[0] ? sources[0][1].count : 1;
@@ -268,8 +391,14 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR }) => {
                                     <div className="p-8 bg-gradient-to-br from-white/10 to-white/5 rounded-full mb-8 shadow-inner ring-1 ring-white/5 border border-white/10 group-hover:shadow-xl transition-all">
                                         <Icons.UserPlus className="w-16 h-16 opacity-20 text-white group-hover:scale-110 transition-transform" />
                                     </div>
-                                    <p className="font-bold text-2xl text-slate-400 mb-2">Nenhuma indicação registrada</p>
-                                    <p className="text-sm">Preencha o campo "Conheceu a loja?" ao registrar uma venda.</p>
+                                    <p className="font-bold text-2xl text-slate-400 mb-2">
+                                        {monthFilter !== 'todos' ? 'Nenhuma indicação neste mês' : 'Nenhuma indicação registrada'}
+                                    </p>
+                                    <p className="text-sm">
+                                        {monthFilter !== 'todos' 
+                                            ? 'Selecione outro mês ou "Todos os Meses" para ver todas.' 
+                                            : 'Preencha o campo "Conheceu a loja?" ao registrar uma venda.'}
+                                    </p>
                                 </div>
                             )}
                         </>
