@@ -55,6 +55,7 @@ export default function LoginScreen({
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #e8e0d0 50%, #f0e8d8 100%)' }}>
+            <style>{`input[type="password"]::-ms-reveal, input[type="password"]::-webkit-password-reveal-button { display: none; }`}</style>
             {/* Background pattern */}
             <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(201,162,39,0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(201,162,39,0.08) 0%, transparent 50%)' }}></div>
             
