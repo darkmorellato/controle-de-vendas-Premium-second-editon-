@@ -5,6 +5,17 @@ const MONTH_NAMES = [
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 
+const typeColors = [
+    { bg: 'from-amber-500 to-yellow-400', text: 'text-amber-900', glow: 'shadow-amber-500/30' },
+    { bg: 'from-blue-500 to-cyan-400', text: 'text-blue-900', glow: 'shadow-blue-500/30' },
+    { bg: 'from-emerald-500 to-teal-400', text: 'text-emerald-900', glow: 'shadow-emerald-500/30' },
+    { bg: 'from-violet-500 to-purple-400', text: 'text-violet-900', glow: 'shadow-violet-500/30' },
+    { bg: 'from-rose-500 to-pink-400', text: 'text-rose-900', glow: 'shadow-rose-500/30' },
+    { bg: 'from-orange-500 to-amber-400', text: 'text-orange-900', glow: 'shadow-orange-500/30' },
+    { bg: 'from-cyan-500 to-sky-400', text: 'text-cyan-900', glow: 'shadow-cyan-500/30' },
+    { bg: 'from-indigo-500 to-blue-400', text: 'text-indigo-900', glow: 'shadow-indigo-500/30' },
+];
+
 export default function SellerReportModal({ isOpen, onClose, seller, sales, formatCurrency, performanceMonthFilter }) {
     if (!isOpen) return null;
 
@@ -63,6 +74,56 @@ export default function SellerReportModal({ isOpen, onClose, seller, sales, form
                         <span className="text-sm text-slate-400">{sellerSales.length} venda{sellerSales.length !== 1 ? 's' : ''} • {totalItems} item{totalItems !== 1 ? 's' : ''}</span>
                     </div>
                 </div>
+
+                {/* Gráfico por Tipo */}
+                {allItems.length > 0 && (() => {
+                    const typeStats = {};
+                    allItems.forEach(item => {
+                        if (!typeStats[item.type]) {
+                            typeStats[item.type] = { qty: 0, value: 0 };
+                        }
+                        typeStats[item.type].qty += item.quantity;
+                        typeStats[item.type].value += Math.abs(item.total);
+                    });
+                    const sortedTypes = Object.entries(typeStats).sort((a, b) => b[1].value - a[1].value);
+                    const maxValue = sortedTypes[0]?.[1]?.value || 1;
+
+                    return (
+                        <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 mb-6">
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="p-2 bg-gradient-to-br from-amber-500/20 to-yellow-500/10 rounded-xl text-amber-400">
+                                    <Icons.BarChart className="w-4 h-4" />
+                                </div>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Vendas por Tipo</h4>
+                            </div>
+                            <div className="space-y-4">
+                                {sortedTypes.map(([type, data], idx) => {
+                                    const colors = typeColors[idx % typeColors.length];
+                                    const percent = Math.round((data.value / maxValue) * 100);
+                                    return (
+                                        <div key={type} className="group">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{type}</span>
+                                                    <span className="text-[10px] text-slate-500">({data.qty} un)</span>
+                                                </div>
+                                                <span className="text-sm font-bold text-amber-400">R$ {formatCurrency(data.value)}</span>
+                                            </div>
+                                            <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden shadow-inner">
+                                                <div 
+                                                    className={`h-full rounded-full bg-gradient-to-r ${colors.bg} transition-all duration-1000 shadow-md group-hover:shadow-lg ${colors.glow}`}
+                                                    style={{ width: `${percent}%` }}
+                                                >
+                                                    <div className="h-full w-full bg-white/20 skew-x-12 -translate-x-full group-hover:animate-shimmer"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {allItems.length > 0 ? (
                     <>
