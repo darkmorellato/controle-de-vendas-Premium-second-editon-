@@ -1,32 +1,144 @@
 import Icons from '../Icons.jsx';
+import { useState, useRef, useEffect } from 'react';
+import Portal from '../Portal.jsx';
 
 const ClientsView = ({
     filteredClients,
     clientSearchTerm,
     setClientSearchTerm,
+    sellerFilter,
+    setSellerFilter,
+    SELLERS_LIST,
     handleViewHistory,
     handleOpenClientData,
     fillClientData,
     setCurrentView
 }) => {
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const filterBtnRef = useRef(null);
+    const [filterPos, setFilterPos] = useState({ right: 0, top: 0 });
+
+    useEffect(() => {
+        if (isFilterOpen && filterBtnRef.current) {
+            const rect = filterBtnRef.current.getBoundingClientRect();
+            setFilterPos({ right: window.innerWidth - rect.right, top: rect.bottom + 8 });
+        }
+    }, [isFilterOpen]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (isFilterOpen && filterBtnRef.current && !filterBtnRef.current.contains(e.target) && !e.target.closest('.seller-filter-dropdown')) {
+                setIsFilterOpen(false);
+            }
+        };
+        if (isFilterOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isFilterOpen]);
+    
+    const handleSelectSeller = (seller) => {
+        setSellerFilter(seller);
+        setIsFilterOpen(false);
+    };
+    
     return (
         <div className="classic-frame rounded-[3rem] shadow-vision border border-white/10 overflow-hidden fade-in-up backdrop-blur-md">
-            <div className="p-10 border-b border-amber-500/20 flex justify-between items-center gap-6 bg-gradient-to-r from-white/5 via-white/3 to-white/5 backdrop-blur-md">
+            <div className="p-10 border-b border-amber-500/20 flex justify-between items-center gap-6 bg-gradient-to-r from-white/5 via-white/3 to-white/5 backdrop-blur-md flex-wrap">
                 <h2 className="text-2xl font-bold text-slate-200 flex items-center gap-4 font-display">
                     <div className="p-3 bg-gradient-to-br from-amber-500/20 to-yellow-500/10 rounded-2xl shadow-lg shadow-amber-500/20 text-amber-400 border border-amber-500/30">
                         <Icons.User className="w-6 h-6" />
                     </div>
                     Carteira de Clientes
+                    <span className="text-sm font-medium text-slate-500 bg-white/5 px-3 py-1 rounded-full">
+                        {filteredClients.length} cliente{filteredClients.length !== 1 ? 's' : ''}
+                    </span>
                 </h2>
-                <div className="relative group">
-                    <Icons.Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
-                    <input 
-                        type="text" 
-                        placeholder="Buscar cliente..." 
-                        value={clientSearchTerm} 
-                        onChange={e => setClientSearchTerm(e.target.value)} 
-                        className="w-80 pl-14 pr-5 py-4 border border-amber-500/20 rounded-[1.5rem] text-sm outline-none font-medium text-slate-300 placeholder-slate-600 bg-white/5 focus:bg-white/10 focus:shadow-lg focus:shadow-amber-500/20 focus:border-amber-500/40 transition-all" 
-                    />
+                <div className="flex items-center gap-4">
+                    <div className="relative group">
+                        <Icons.Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
+                        <input 
+                            type="text" 
+                            placeholder="Buscar cliente..." 
+                            value={clientSearchTerm} 
+                            onChange={e => setClientSearchTerm(e.target.value)} 
+                            className="w-64 pl-14 pr-5 py-4 border border-amber-500/20 rounded-[1.5rem] text-sm outline-none font-medium text-slate-300 placeholder-slate-600 bg-white/5 focus:bg-white/10 focus:shadow-lg focus:shadow-amber-500/20 focus:border-amber-500/40 transition-all" 
+                        />
+                    </div>
+                    <div className="relative">
+                        <button 
+                            ref={filterBtnRef}
+                            type="button"
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className={`p-4 rounded-[1.5rem] border transition-all duration-300 ${
+                                sellerFilter !== 'todos' 
+                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-lg shadow-amber-500/20' 
+                                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-amber-500/30 hover:text-amber-400'
+                            }`}
+                            title={sellerFilter !== 'todos' ? `Filtrando: ${sellerFilter}` : 'Filtrar por vendedor'}
+                        >
+                            <Icons.Filter className="w-5 h-5" />
+                        </button>
+
+                        {isFilterOpen && (
+                            <Portal>
+                                <div 
+                                    className="fixed w-80 bg-[#fdfaf4] border-2 border-[#c9a227]/50 rounded-2xl shadow-2xl overflow-hidden z-[9999] seller-filter-dropdown"
+                                    style={{ 
+                                        right: filterPos.right,
+                                        top: filterPos.top,
+                                        boxShadow: '0 10px 40px rgba(201,162,39,0.35), 0 0 60px rgba(201,162,39,0.15)'
+                                    }}
+                                >
+                                    <div className="p-5 border-b border-[#c9a227]/40 bg-gradient-to-r from-[#c9a227]/20 via-[#c9a227]/10 to-transparent">
+                                        <h3 className="font-bold text-[#0f0f0f] text-lg flex items-center gap-2 tracking-wide">
+                                            <Icons.Filter className="w-5 h-5 text-[#c9a227]" />
+                                            Filtrar por Vendedor
+                                        </h3>
+                                    </div>
+                                    <div className="py-3 px-2 max-h-80 overflow-y-auto">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelectSeller('todos')}
+                                            className={`w-full px-4 py-4 mx-2 my-1 rounded-xl transition-all hover:bg-[#c9a227]/20 border border-transparent hover:border-[#c9a227]/40 ${[
+                                                sellerFilter === 'todos' ? 'bg-[#c9a227]/20 border-[#c9a227]/40' : ''
+                                            ]}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2.5 bg-[#c9a227]/20 rounded-lg border border-[#c9a227]/40">
+                                                    <Icons.Users className="w-5 h-5 text-[#8b6914]" />
+                                                </div>
+                                                <span className={`text-base font-medium ${sellerFilter === 'todos' ? 'text-[#c9a227]' : 'text-[#0f0f0f]'}`}>Todos os Vendedores</span>
+                                            </div>
+                                        </button>
+                                        {SELLERS_LIST.map(seller => (
+                                            <button
+                                                key={seller}
+                                                type="button"
+                                                onClick={() => handleSelectSeller(seller)}
+                                                className={`w-full px-4 py-4 mx-2 my-1 rounded-xl transition-all hover:bg-[#c9a227]/20 border border-transparent hover:border-[#c9a227]/40 ${
+                                                    sellerFilter === seller ? 'bg-[#c9a227]/20 border-[#c9a227]/40' : ''
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2.5 rounded-lg border ${
+                                                        seller === 'Sabrina Almeida' 
+                                                            ? 'bg-blue-500/20 border-blue-500/40' 
+                                                            : 'bg-pink-500/20 border-pink-500/40'
+                                                    }`}>
+                                                        <div className={`w-5 h-5 rounded-full ${
+                                                            seller === 'Sabrina Almeida' ? 'bg-blue-500' : 'bg-pink-500'
+                                                        }`}></div>
+                                                    </div>
+                                                    <span className={`text-base font-medium ${sellerFilter === seller ? 'text-[#c9a227]' : 'text-[#0f0f0f]'}`}>{seller}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Portal>
+                        )}
+                    </div>
                 </div>
             </div>
             <div className="overflow-x-auto">

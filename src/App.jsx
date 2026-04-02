@@ -77,6 +77,7 @@ const App = () => {
   const [selectedClientHistory, setSelectedClientHistory] = useState(null);
   const [clientDetailsData, setClientDetailsData] = useState(null);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [sellerFilter, setSellerFilter] = useState('todos');
   const [alertModalOpen, setAlertModalOpen] = useState(false);
   const [alertData, setAlertData] = useState({ message: '', phase: '' });
   const [lastAlertTime, setLastAlertTime] = useState(0);
@@ -586,14 +587,25 @@ const App = () => {
 
   // Dados derivados
   const filteredClients = useMemo(() => {
-    if (!clientSearchTerm) return clients;
-    const term = clientSearchTerm.toLowerCase();
-    return clients.filter(
-      (c) =>
-        (c.name || '').toLowerCase().includes(term) ||
-        (c.cpf && c.cpf.includes(clientSearchTerm)),
-    );
-  }, [clients, clientSearchTerm]);
+    let result = clients;
+    
+    // Filtro por vendedor
+    if (sellerFilter && sellerFilter !== 'todos') {
+      result = result.filter(c => c.createdBy === sellerFilter);
+    }
+    
+    // Filtro por busca
+    if (clientSearchTerm) {
+      const term = clientSearchTerm.toLowerCase();
+      result = result.filter(
+        (c) =>
+          (c.name || '').toLowerCase().includes(term) ||
+          (c.cpf && c.cpf.includes(clientSearchTerm)),
+      );
+    }
+    
+    return result;
+  }, [clients, clientSearchTerm, sellerFilter]);
 
   // Tela de login
   if (!authState.isLoggedIn) {
@@ -681,7 +693,7 @@ const App = () => {
           <SimpleCalendar routineState={routineState} toggleRoutine={toggleRoutine} reminders={reminders} setReminders={setReminders} />
         ) : currentViewState === 'clients' ? (
           <Suspense fallback={<PageLoader />}>
-            <ClientsView clients={clients} filteredClients={filteredClients} clientSearchTerm={clientSearchTerm} setClientSearchTerm={setClientSearchTerm} handleViewHistory={handleViewHistory} handleOpenClientData={handleOpenClientData} fillClientData={form.fillClientData} setCurrentView={setCurrentViewState} />
+            <ClientsView clients={clients} filteredClients={filteredClients} clientSearchTerm={clientSearchTerm} setClientSearchTerm={setClientSearchTerm} sellerFilter={sellerFilter} setSellerFilter={setSellerFilter} SELLERS_LIST={SELLERS_LIST} handleViewHistory={handleViewHistory} handleOpenClientData={handleOpenClientData} fillClientData={form.fillClientData} setCurrentView={setCurrentViewState} />
           </Suspense>
         ) : currentViewState === 'referrals' ? (
           <Suspense fallback={<PageLoader />}>
