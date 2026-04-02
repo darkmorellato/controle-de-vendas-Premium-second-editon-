@@ -17,6 +17,7 @@ export { useClientFormHandlers } from './useClientFormHandlers.ts';
 export { useClientDataModal } from './useClientDataModal.ts';
 export { useReceiptHandlers } from './useReceiptHandlers.ts';
 export { useBackupHandlers } from './useBackupHandlers.ts';
+export { useSalesSubmissionHandlers } from './useSalesSubmissionHandlers.ts';
 
 // Utility hooks
 export {
