@@ -2,7 +2,7 @@ import Icons from './Icons.jsx';
 import { useMemo, useRef, useEffect } from 'react';
 import { countUnits } from '../utils.js'; // S-4: versão canônica unificada
 
-export default function NotificationsDropdown({ isOpen, onClose, onMarkAsRead, sales, settings, clients, reminders, GOAL_SELLERS, GOAL_MANAGER, ELIGIBLE_FOR_GOAL }) {
+export default function NotificationsDropdown({ isOpen, onClose, onMarkAsRead, onOpenFullModal, sales, settings, clients, reminders, GOAL_SELLERS, GOAL_MANAGER, ELIGIBLE_FOR_GOAL }) {
     const dropdownRef = useRef(null);
 
     // BUG-8 fix: estabilizar 'now' para que os useMemos não recomputem a cada render
@@ -272,6 +272,17 @@ export default function NotificationsDropdown({ isOpen, onClose, onMarkAsRead, s
                         <p className="text-[10px] text-[#1a1a1a]/50 mt-1">Sem notificações pendentes</p>
                     </div>
                 )}
+
+                {/* Botão Ver Mais */}
+                <div className="p-3 border-t border-[#c9a227]/30">
+                    <button 
+                        onClick={() => { onClose(); if (onOpenFullModal) onOpenFullModal(); }}
+                        className="w-full py-3 bg-gradient-to-r from-[#c9a227] to-[#dbb84d] text-[#1a1a1a] rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-[#c9a227]/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                        <Icons.Bell className="w-4 h-4" />
+                        Ver Todas as Notificações
+                    </button>
+                </div>
             </div>
         </div>
     );

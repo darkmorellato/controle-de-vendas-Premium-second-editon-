@@ -25,7 +25,8 @@ export default function Header({
     reminders,
     GOAL_SELLERS,
     GOAL_MANAGER,
-    ELIGIBLE_FOR_GOAL
+    ELIGIBLE_FOR_GOAL,
+    onOpenNotificationsModal
 }) {
     const [notificationsRead, setNotificationsRead] = useState(false);
 
@@ -176,6 +177,7 @@ export default function Header({
                                 isOpen={isNotificationsDropdownOpen}
                                 onClose={() => setIsNotificationsDropdownOpen(false)}
                                 onMarkAsRead={() => { setNotificationsRead(true); setIsNotificationsDropdownOpen(false); }}
+                                onOpenFullModal={onOpenNotificationsModal}
                                 sales={sales}
                                 clients={clients}
                                 settings={settings}

@@ -25,6 +25,7 @@ const ClientHistoryModalLazy = lazy(() => import('./components/modals/ClientHist
 const ClientDataModalLazy = lazy(() => import('./components/modals/ClientDataModal.jsx'));
 const ManagerAuthModalLazy = lazy(() => import('./components/modals/ManagerAuthModal.jsx'));
 const BirthdayAlertModalLazy = lazy(() => import('./components/modals/BirthdayAlertModal.jsx'));
+const NotificationsModalLazy = lazy(() => import('./components/modals/NotificationsModal.jsx'));
 const CommissionModalLazy = lazy(() => import('./components/modals/CommissionModal.jsx'));
 const ConfirmClientUpdateModalLazy = lazy(() => import('./components/modals/ConfirmClientUpdateModal.jsx'));
 const ClientDetailsModalLazy = lazy(() => import('./components/modals/ClientDetailsModal.jsx'));
@@ -717,6 +718,7 @@ const App = () => {
         GOAL_SELLERS={GOAL_SELLERS}
         GOAL_MANAGER={GOAL_MANAGER}
         ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL}
+        onOpenNotificationsModal={() => openModal('notifications')}
       />
 
       {!isOnline && (
@@ -819,6 +821,21 @@ const App = () => {
       </Suspense>
       <Suspense fallback={null}>
         <BirthdayAlertModalLazy isOpen={notifications.todayBirthdays.length > 0 && modals.birthdayAlert?.open} onClose={() => closeModal('birthdayAlert')} todayBirthdays={notifications.todayBirthdays} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <NotificationsModalLazy 
+          isOpen={modals.notifications?.open} 
+          onClose={() => closeModal('notifications')} 
+          sales={sales} 
+          settings={authState.settings} 
+          clients={clients} 
+          reminders={reminders} 
+          GOAL_SELLERS={GOAL_SELLERS} 
+          GOAL_MANAGER={GOAL_MANAGER} 
+          ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} 
+          onGoToCalendar={() => { closeModal('notifications'); setCurrentViewState('calendar'); }} 
+          formatCurrency={formatCurrency} 
+        />
       </Suspense>
       <Suspense fallback={null}>
         <CommissionModalLazy isOpen={modals.commission?.open} onClose={() => closeModal('commission')} sales={sales} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} formatCurrency={formatCurrency} performanceMonthFilter={performanceMonthFilter} setPerformanceMonthFilter={setPerformanceMonthFilter} performanceAvailableMonths={performanceAvailableMonths} />
