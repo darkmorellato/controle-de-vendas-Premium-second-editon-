@@ -6,6 +6,7 @@ import Header from './components/views/Header.jsx';
 import ToastContainer from './components/ToastContainer.jsx';
 import SimpleCalendar from './components/SimpleCalendar.jsx';
 import TaskAlertModal from './components/TaskAlertModal.jsx';
+import { SalesFormProvider } from './contexts/SalesFormContext.jsx';
 
 const ClientsView = lazy(() => import('./components/views/ClientsView.jsx'));
 const ReferralsView = lazy(() => import('./components/views/ReferralsView.jsx'));
@@ -54,7 +55,8 @@ const App = () => {
   const { sales } = useSalesContext();
   const { clients } = useClientContext();
   const ui = useUIContext();
-  const { auth: authState, form, filters, notifications } = app;
+  const { auth: authState, form, filters, notifications, handlers, appState } = app;
+  const { itemHandlers, paymentHandlers, clientHandlers } = handlers;
   const {
     currentView: currentViewState, setCurrentView: setCurrentViewState,
     isOnline, handleOnline, handleOffline,
@@ -695,36 +697,9 @@ const App = () => {
           </Suspense>
         ) : (
           <Suspense fallback={<PageLoader />}>
-            <SalesForm
-              date={form.date} setDate={form.setDate} isDateLocked={form.isDateLocked} setDateLockModalOpen={() => openModal('dateLock')} setIsDateLocked={form.setIsDateLocked}
-              category={form.category} setCategory={form.setCategory}
-              clientName={form.clientName} setClientName={form.setClientName} clientCpf={form.clientCpf} setClientCpf={form.setClientCpf} clientPhone={form.clientPhone} setClientPhone={form.setClientPhone}
-              clientEmail={form.clientEmail} setClientEmail={form.setClientEmail} clientDob={form.clientDob} setClientDob={form.setClientDob} clientAddress={form.clientAddress} setClientAddress={form.setClientAddress}
-              clientNumber={form.clientNumber} setClientNumber={form.setClientNumber} clientCity={form.clientCity} setClientCity={form.setClientCity} clientZip={form.clientZip} setClientZip={form.setClientZip}
-              clientState={form.clientState} setClientState={form.setClientState} clientNeighborhood={form.clientNeighborhood} setClientNeighborhood={form.setClientNeighborhood}
-              items={form.items} newItemQty={form.newItemQty} setNewItemQty={form.setNewItemQty} newItemType={form.newItemType} setNewItemType={form.setNewItemType} newItemDesc={form.newItemDesc} setNewItemDesc={form.setNewItemDesc}
-              newItemRam={form.newItemRam} setNewItemRam={form.setNewItemRam} newItemColor={form.newItemColor} setNewItemColor={form.setNewItemColor} newItemImei={form.newItemImei} setNewItemImei={form.setNewItemImei}
-              newItemFinanced={form.newItemFinanced} setNewItemFinanced={form.setNewItemFinanced} newItemPrice={form.newItemPrice} setNewItemPrice={form.setNewItemPrice}
-              newItemDiscount={form.newItemDiscount} setNewItemDiscount={form.setNewItemDiscount} newItemDiscountPercent={form.newItemDiscountPercent} setNewItemDiscountPercent={form.setNewItemDiscountPercent}
-              editingItemId={form.editingItemId} setEditingItemId={form.setEditingItemId}
-              exchangeAction={form.exchangeAction} setExchangeAction={form.setExchangeAction}
-              paymentList={form.paymentList} currentPaymentMethod={form.currentPaymentMethod} setCurrentPaymentMethod={form.setCurrentPaymentMethod}
-              currentPaymentType={form.currentPaymentType} setCurrentPaymentType={form.setCurrentPaymentType} currentPaymentAmount={form.currentPaymentAmount} setCurrentPaymentAmount={form.setCurrentPaymentAmount}
-              currentInstallments={form.currentInstallments} setCurrentInstallments={form.setCurrentInstallments} editingPaymentId={form.editingPaymentId} setEditingPaymentId={form.setEditingPaymentId}
-              clientSource={form.clientSource} setClientSource={form.setClientSource}
-              paymentObservation={form.paymentObservation} setPaymentObservation={form.setPaymentObservation}
-              contractPdf={form.contractPdf} setContractPdf={form.setContractPdf}
-              editingId={form.editingId} resetForm={form.resetForm}
-              showToast={showToast}
-              totalAmount={form.totalAmount} totalDiscount={form.totalDiscount} finalTotal={form.finalTotal} remainingToPay={form.remainingToPay} totalPaid={form.totalPaid} changeAmount={form.changeAmount}
-              handleAddItem={handleAddItem} handleEditItem={form.handleEditItem} handleAddPayment={handleAddPayment} handleEditPayment={form.handleEditPayment} handleRemovePayment={handleRemovePayment}
-              handleSubmit={handleSubmit} handleCpfChange={handleCpfChange} handleZipChange={handleZipChange} maskPhone={maskPhone} maskDateStrict={maskDateStrict} maskIMEI={maskIMEI}
-              handleItemPriceChange={handleItemPriceChange} handlePercentChange={handlePercentChange} handleDiscountValChange={handleDiscountValChange}
-              handleCurrentPaymentAmountChange={handleCurrentPaymentAmountChange} getPaymentStyles={getPaymentStyles}
-              setClientSearchModalOpen={() => openModal('clientSearch')} handleSaveClient={handleSaveClient}
-              CATEGORIES_LIST={CATEGORIES_LIST} PRODUCT_TYPES={PRODUCT_TYPES} RAM_STORAGE_OPTIONS={RAM_STORAGE_OPTIONS} PAYMENT_METHODS={PAYMENT_METHODS} PAYMENT_TYPES={PAYMENT_TYPES} UF_LIST={UF_LIST}
-              formatCurrency={formatCurrency}
-            />
+            <SalesFormProvider value={form}>
+              <SalesForm showToast={showToast} formatCurrency={formatCurrency} maskPhone={maskPhone} maskDateStrict={maskDateStrict} maskIMEI={maskIMEI} getPaymentStyles={getPaymentStyles} CATEGORIES_LIST={CATEGORIES_LIST} PRODUCT_TYPES={PRODUCT_TYPES} RAM_STORAGE_OPTIONS={RAM_STORAGE_OPTIONS} PAYMENT_METHODS={PAYMENT_METHODS} PAYMENT_TYPES={PAYMENT_TYPES} UF_LIST={UF_LIST} setClientSearchModalOpen={() => openModal('clientSearch')} setDateLockModalOpen={() => openModal('dateLock')} handleCpfChange={handleCpfChange} handleZipChange={handleZipChange} handleAddItem={itemHandlers.handleAddItem} handleEditItem={form.handleEditItem} handleAddPayment={paymentHandlers.handleAddPayment} handleEditPayment={form.handleEditPayment} handleRemovePayment={paymentHandlers.handleRemovePayment} handleSubmit={handleSubmit} handleItemPriceChange={itemHandlers.handleItemPriceChange} handlePercentChange={itemHandlers.handlePercentChange} handleDiscountValChange={itemHandlers.handleDiscountValChange} handleCurrentPaymentAmountChange={paymentHandlers.handleCurrentPaymentAmountChange} handleSaveClient={clientHandlers.handleSaveClient} />
+            </SalesFormProvider>
           </Suspense>
         )}
       </div>

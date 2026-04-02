@@ -6,12 +6,11 @@ export const ErrorHandlerProvider = ({ children }) => {
   const [errors, setErrors] = useState([]);
 
   const addError = useCallback((error) => {
-    const errorWithTimestamp = {
+    setErrors((prev) => [...prev, {
       ...error,
       id: Date.now(),
       timestamp: new Date().toISOString(),
-    };
-    setErrors((prev) => [...prev, errorWithTimestamp]);
+    }]);
   }, []);
 
   const clearError = useCallback((errorId) => {

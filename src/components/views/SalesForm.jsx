@@ -1,36 +1,42 @@
 import Icons from '../Icons.jsx';
 import DateInput from '../DateInput.jsx';
+import { useSalesFormContext } from '../../contexts/SalesFormContext.jsx';
 
-const SalesForm = ({
-    date, setDate, isDateLocked, setDateLockModalOpen, setIsDateLocked,
-    category, setCategory,
-    clientName, setClientName, clientCpf, setClientCpf, clientPhone, setClientPhone,
-    clientEmail, setClientEmail, clientDob, setClientDob, clientAddress, setClientAddress,
-    clientNumber, setClientNumber, clientCity, setClientCity, clientZip, setClientZip,
-    clientState, setClientState, clientNeighborhood, setClientNeighborhood,
-    items, newItemQty, setNewItemQty, newItemType, setNewItemType, newItemDesc, setNewItemDesc,
-    newItemRam, setNewItemRam, newItemColor, setNewItemColor, newItemImei, setNewItemImei,
-    newItemFinanced, setNewItemFinanced, newItemPrice, setNewItemPrice,
-    newItemDiscount, setNewItemDiscount, newItemDiscountPercent, setNewItemDiscountPercent,
-    editingItemId, setEditingItemId,
-    exchangeAction, setExchangeAction,
-    paymentList, currentPaymentMethod, setCurrentPaymentMethod,
-    currentPaymentType, setCurrentPaymentType, currentPaymentAmount, setCurrentPaymentAmount,
-    currentInstallments, setCurrentInstallments, editingPaymentId, setEditingPaymentId,
-    clientSource, setClientSource,
-    paymentObservation, setPaymentObservation,
-    contractPdf, setContractPdf,
-    editingId, resetForm,
-    showToast,
-    totalAmount, totalDiscount, finalTotal, remainingToPay, totalPaid, changeAmount,
-    handleAddItem, handleEditItem, handleAddPayment, handleEditPayment, handleRemovePayment,
-    handleSubmit, handleCpfChange, handleZipChange, maskPhone, maskDateStrict, maskIMEI,
-    handleItemPriceChange, handlePercentChange, handleDiscountValChange,
-    handleCurrentPaymentAmountChange, getPaymentStyles,
-    setClientSearchModalOpen, handleSaveClient,
-    CATEGORIES_LIST, PRODUCT_TYPES, RAM_STORAGE_OPTIONS, PAYMENT_METHODS, PAYMENT_TYPES, UF_LIST,
-    formatCurrency
-}) => {
+const SalesForm = (props) => {
+    const ctx = useSalesFormContext();
+    const form = ctx || props || {};
+    
+    const {
+        date = '', setDate = () => {}, isDateLocked = false, setDateLockModalOpen = () => {}, setIsDateLocked = () => {},
+        category = '', setCategory = () => {},
+        clientName = '', setClientName = () => {}, clientCpf = '', setClientCpf = () => {}, clientPhone = '', setClientPhone = () => {},
+        clientEmail = '', setClientEmail = () => {}, clientDob = '', setClientDob = () => {}, clientAddress = '', setClientAddress = () => {},
+        clientNumber = '', setClientNumber = () => {}, clientCity = '', setClientCity = () => {}, clientZip = '', setClientZip = () => {},
+        clientState = '', setClientState = () => {}, clientNeighborhood = '', setClientNeighborhood = () => {},
+        items = [], newItemQty = 1, setNewItemQty = () => {}, newItemType = '', setNewItemType = () => {}, newItemDesc = '', setNewItemDesc = () => '',
+        newItemRam = '', setNewItemRam = () => {}, newItemColor = '', setNewItemColor = () => {}, newItemImei = '', setNewItemImei = () => {},
+        newItemFinanced = 'Não', setNewItemFinanced = () => {}, newItemPrice = '', setNewItemPrice = () => '',
+        newItemDiscount = '', setNewItemDiscount = () => {}, newItemDiscountPercent = '', setNewItemDiscountPercent = () => '',
+        editingItemId = null, setEditingItemId = () => {},
+        exchangeAction = 'out', setExchangeAction = () => {},
+        paymentList = [], currentPaymentMethod = '', setCurrentPaymentMethod = () => '',
+        currentPaymentType = '', setCurrentPaymentType = () => {}, currentPaymentAmount = '', setCurrentPaymentAmount = () => '',
+        currentInstallments = '', setCurrentInstallments = () => {}, editingPaymentId = null, setEditingPaymentId = () => {},
+        clientSource = '', setClientSource = () => '',
+        paymentObservation = '', setPaymentObservation = () => '',
+        contractPdf = null, setContractPdf = () => null,
+        editingId = null, resetForm = () => {},
+        showToast = () => {},
+        totalAmount = 0, totalDiscount = 0, finalTotal = 0, remainingToPay = 0, totalPaid = 0, changeAmount = 0,
+        handleAddItem = () => {}, handleEditItem = () => {}, handleAddPayment = () => {}, handleEditPayment = () => {}, handleRemovePayment = () => {},
+        handleSubmit = () => {}, handleCpfChange = () => {}, handleZipChange = () => {}, maskPhone = (v) => v, maskDateStrict = (v) => v, maskIMEI = (v) => v,
+        handleItemPriceChange = () => {}, handlePercentChange = () => {}, handleDiscountValChange = () => {},
+        handleCurrentPaymentAmountChange = () => {}, getPaymentStyles = () => ({}),
+        setClientSearchModalOpen = () => {}, handleSaveClient = () => {},
+        CATEGORIES_LIST = [], PRODUCT_TYPES = [], RAM_STORAGE_OPTIONS = [], PAYMENT_METHODS = [], PAYMENT_TYPES = [], UF_LIST = [],
+        formatCurrency = (v) => v
+    } = form;
+
     return (
         <>
             <div className="classic-frame rounded-[3rem] shadow-vision border border-white/10 overflow-hidden no-print fade-in-up backdrop-blur-md">
