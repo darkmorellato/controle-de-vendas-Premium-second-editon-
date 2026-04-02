@@ -13,6 +13,7 @@ const makeInitial = () => ({
   category: '',
   clientSource: '',
   paymentObservation: '',
+  contractPdf: null,
 });
 
 /**
@@ -32,6 +33,7 @@ function metaReducer(state, action) {
         category:             action.sale.category,
         clientSource:         action.sale.clientSource         || '',
         paymentObservation:   action.sale.paymentObservation   || '',
+        contractPdf:           null,
         isDateLocked:         true,
       };
     case 'RESET':
@@ -56,6 +58,7 @@ export function useSaleMetadata() {
   const setCategory            = useCallback((v) => dispatch({ type: 'SET_FIELD', field: 'category',            value: v }), []);
   const setClientSource        = useCallback((v) => dispatch({ type: 'SET_FIELD', field: 'clientSource',        value: v }), []);
   const setPaymentObservation  = useCallback((v) => dispatch({ type: 'SET_FIELD', field: 'paymentObservation',  value: v }), []);
+  const setContractPdf         = useCallback((v) => dispatch({ type: 'SET_FIELD', field: 'contractPdf',         value: v }), []);
 
   /** Carrega metadados de uma venda existente para edição */
   const loadFromSale = useCallback((sale) => dispatch({ type: 'LOAD_EDIT', sale }), []);
@@ -66,7 +69,7 @@ export function useSaleMetadata() {
   return {
     ...state,
     setDate, setIsDateLocked, setEditingId, setOriginalEmployeeName,
-    setCategory, setClientSource, setPaymentObservation,
+    setCategory, setClientSource, setPaymentObservation, setContractPdf,
     loadFromSale, reset,
   };
 }

@@ -6,6 +6,7 @@ export { default as DateLockModal } from './DateLockModal.jsx';
 export { default as ConfirmClientUpdateModal } from './ConfirmClientUpdateModal.jsx';
 export { default as ClientSearchModal } from './ClientSearchModal.jsx';
 export { default as ClientHistoryModal } from './ClientHistoryModal.jsx';
+export { default as ClientDetailsModal } from './ClientDetailsModal.jsx';
 export { default as ClientDataModal } from './ClientDataModal.jsx';
 export { default as ManagerAuthModal } from './ManagerAuthModal.jsx';
 export { default as BirthdayAlertModal } from './BirthdayAlertModal.jsx';

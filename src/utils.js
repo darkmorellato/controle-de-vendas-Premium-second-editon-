@@ -125,8 +125,21 @@ export const verifyPassword = async (plain, stored) => {
  */
 export const formatDateBR = (dateString) => {
   if (!dateString) return '';
-  const [year, month, day] = dateString.split('-');
-  return `${day}/${month}/${year}`;
+  if (typeof dateString !== 'string') return '';
+  if (dateString.includes('undefined')) return '';
+  if (dateString.includes('/')) {
+    const parts = dateString.split('/');
+    if (parts.length !== 3) return '';
+    const [day, month, year] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  if (dateString.includes('-')) {
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return '';
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return dateString;
 };
 
 // ─── Formatação monetária ────────────────────────────────────────────────────

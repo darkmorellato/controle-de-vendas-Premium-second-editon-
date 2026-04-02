@@ -8,18 +8,30 @@ function SalesList({
     handlePrevDate, handleNextDate, currentPage, setCurrentPage, totalPages,
     openReceipt, startEdit, pendingEditItem, setPendingEditItem,
     setPendingAuthAction, setManagerAuthModalOpen,
-    formatCurrency, formatDateBR, printSalesList, getPaymentStyles
+    formatCurrency, formatDateBR, printSalesList, getPaymentStyles,
+    openClientDetails
 }) {
+    const openContractPdf = (pdfUrl) => {
+        if (!pdfUrl) return;
+        const blob = fetch(pdfUrl).then(res => res.blob());
+        blob.then(blob => {
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        });
+    };
+    
     return (
-        <div className="space-y-10 mt-16">
+        <div className="max-w-6xl mx-auto px-6 space-y-10 mt-16">
             <div className="hidden print:block text-center mb-6 border-b-2 border-black pb-2"><h1 className="text-2xl font-bold uppercase">Relatório de Vendas</h1><p className="text-sm">{filterDate ? `Data: ${formatDateBR(filterDate)}` : (searchTerm ? `Filtro: ${searchTerm}` : `Geral - ${new Date().toLocaleDateString('pt-BR')}`)}</p></div>
             <div className="bg-[#fdfaf4] p-8 rounded-[2.5rem] shadow-sm border border-[#0f0f0f]/10 flex flex-col gap-8 no-print shadow-vision">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="p-6 bg-white rounded-[2rem] border border-amber-500/20 shadow-lg shadow-amber-500/10">
-                        <p className="text-[10px] text-[#0f0f0f]/60 uppercase font-bold tracking-widest mb-1">Total Listado</p>
-                        <p className="text-4xl font-black text-[#0f0f0f] tracking-tighter">
-                            {settings.currency} {formatCurrency(filteredSales.reduce((s, i) => s + (i.amountPaid || i.amount), 0))}
-                        </p>
+                    <div className="shrink-0">
+                        <div className="p-6 bg-white rounded-[2rem] border border-amber-500/20 shadow-lg shadow-amber-500/10">
+                            <p className="text-[10px] text-[#0f0f0f]/60 uppercase font-bold tracking-widest mb-1">Total Listado</p>
+                            <p className="text-4xl font-black text-[#0f0f0f] tracking-tighter">
+                                {settings.currency} {formatCurrency(filteredSales.reduce((s, i) => s + (i.amountPaid || i.amount), 0))}
+                            </p>
+                        </div>
                     </div>
                     <div className="flex flex-wrap gap-4 w-full md:w-auto items-center justify-center md:justify-end">
                         <div className="flex items-center gap-2 bg-white border border-amber-500/20 p-1.5 rounded-2xl shadow-lg shadow-amber-500/10">
@@ -92,8 +104,10 @@ function SalesList({
                                         {group.items.map(s => (
                                             <tr key={s.id} className="hover:bg-amber-500/5 transition-all duration-300 group border-b border-[#0f0f0f]/10 last:border-0 hover:shadow-md hover:shadow-amber-500/10">
                                                 <td className="p-4 pl-6 align-top">
-                                                    <div className="font-bold text-[#0f0f0f] leading-tight mb-1" style={{ fontSize: '15px' }}>{s.clientName}</div>
-                                                    <div className="font-mono text-[#0f0f0f]/50" style={{ fontSize: '11px' }}>{s.clientCpf}</div>
+                                                    <button onClick={() => openClientDetails && openClientDetails(s)} className="text-left hover:text-amber-600 transition-colors">
+                                                        <div className="font-bold text-[#0f0f0f] leading-tight mb-1 hover:underline" style={{ fontSize: '15px' }}>{s.clientName}</div>
+                                                        <div className="font-mono text-[#0f0f0f]/50" style={{ fontSize: '11px' }}>{s.clientCpf}</div>
+                                                    </button>
                                                 </td>
                                                 <td className="p-4 align-top">
                                                     <div className="space-y-2">{(s.items || []).map((i, idx) => (
@@ -129,7 +143,7 @@ function SalesList({
                                                     <div className="font-black text-[#0f0f0f]" style={{ fontSize: '17px', whiteSpace: 'nowrap' }}>{formatCurrency(s.amountPaid || s.amount)}</div>
                                                     {s.clientSource && <div className="mt-1 font-bold text-orange-600 uppercase tracking-wider text-center" style={{ fontSize: '10px' }}>{s.clientSource}</div>}
                                                 </td>
-                                                <td className="p-4 align-top text-center no-print"><div className="flex flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-3 group-hover:translate-x-0"><button onClick={() => openReceipt(s)} title="Ver Recibo" className="p-2 text-[#0f0f0f]/60 hover:text-[#0f0f0f] hover:bg-[#0f0f0f]/10 rounded-xl transition-colors"><Icons.Receipt className="w-5 h-5" /></button>{s.clientPhone && (<button onClick={() => window.open(`https://wa.me/55${s.clientPhone.replace(/\D/g, '')}`, '_blank')} title="WhatsApp" className="p-2 text-[#0f0f0f]/60 hover:text-[#598c73] hover:bg-[#0f0f0f]/10 rounded-xl transition-colors"><Icons.WhatsApp className="w-5 h-5" /></button>)}<button onClick={() => { setPendingEditItem(s); setPendingAuthAction('edit'); setManagerAuthModalOpen(true); }} className="p-2 text-[#0f0f0f]/60 hover:text-[#0f0f0f] hover:bg-[#0f0f0f]/10 rounded-xl transition-colors"><Icons.Edit className="w-5 h-5" /></button></div></td>
+                                                <td className="p-4 align-top text-center no-print"><div className="flex flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-3 group-hover:translate-x-0"><button onClick={() => openReceipt(s)} title="Ver Recibo" className="p-2 text-[#0f0f0f]/60 hover:text-[#0f0f0f] hover:bg-[#0f0f0f]/10 rounded-xl transition-colors"><Icons.Receipt className="w-5 h-5" /></button>{s.contractPdfUrl && (<button onClick={() => openContractPdf(s.contractPdfUrl)} title="Ver Contrato PDF" className="p-2 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"><Icons.FileText className="w-5 h-5" /></button>)}{s.clientPhone && (<button onClick={() => window.open(`https://wa.me/55${s.clientPhone.replace(/\D/g, '')}`, '_blank')} title="WhatsApp" className="p-2 text-[#0f0f0f]/60 hover:text-[#598c73] hover:bg-[#0f0f0f]/10 rounded-xl transition-colors"><Icons.WhatsApp className="w-5 h-5" /></button>)}<button onClick={() => { setPendingEditItem(s); setPendingAuthAction('edit'); setManagerAuthModalOpen(true); }} className="p-2 text-[#0f0f0f]/60 hover:text-[#0f0f0f] hover:bg-[#0f0f0f]/10 rounded-xl transition-colors"><Icons.Edit className="w-5 h-5" /></button></div></td>
                                             </tr>
                                         ))}
                                     </tbody>

@@ -5,6 +5,17 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 
+const MAX_CONTRACT_SIZE = 1 * 1024 * 1024; // 1MB (Firestore limit)
+
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 export const salesService = {
   subscribe(cutoffStr, onUpdate, onError) {
     const q = query(
@@ -60,5 +71,47 @@ export const salesService = {
       });
     });
     return batch.commit();
+  },
+
+  async uploadContract(saleId, file) {
+    if (!file) {
+      throw new Error('Arquivo não fornecido');
+    }
+
+    if (file.type !== 'application/pdf') {
+      throw new Error('Apenas arquivos PDF são permitidos');
+    }
+
+    if (file.size > MAX_CONTRACT_SIZE) {
+      throw new Error('O arquivo deve ter no máximo 5MB');
+    }
+
+    // Convert PDF to Base64 and store in Firestore
+    const base64Data = await fileToBase64(file);
+    
+    // Save contract to a separate collection for backup
+    await setDoc(doc(db, 'contratos', saleId), {
+      saleId,
+      fileName: file.name,
+      fileSize: file.size,
+      contentType: file.type,
+      base64Data,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Return a data URL that can be used directly (works for PDFs)
+    return base64Data;
+  },
+
+  async deleteContract(saleId) {
+    try {
+      await deleteDoc(doc(db, 'contratos', saleId));
+      return true;
+    } catch (error) {
+      if (error.code === 'not-found') {
+        return false;
+      }
+      throw error;
+    }
   },
 };

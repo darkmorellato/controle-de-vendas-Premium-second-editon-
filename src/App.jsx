@@ -1,22 +1,32 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import Icons from './components/Icons.jsx';
+import PageLoader from './components/PageLoader.tsx';
 import LoginScreen from './components/views/LoginScreen.jsx';
-import ClientsView from './components/views/ClientsView.jsx';
 import Header from './components/views/Header.jsx';
 import ToastContainer from './components/ToastContainer.jsx';
 import SimpleCalendar from './components/SimpleCalendar.jsx';
 import TaskAlertModal from './components/TaskAlertModal.jsx';
-import ReferralsView from './components/views/ReferralsView.jsx';
-import ManagerView from './components/views/ManagerView.jsx';
-import PerformanceView from './components/views/PerformanceView.jsx';
-import SalesForm from './components/views/SalesForm.jsx';
-import SalesList from './components/views/SalesList.jsx';
-import {
-  BackupModal, LogoutModal, ConfirmSaleModal, ConfirmChangeModal,
-  DateLockModal, ConfirmClientUpdateModal, ClientSearchModal,
-  ClientHistoryModal, ClientDataModal, ManagerAuthModal, BirthdayAlertModal,
-  CommissionModal, ReceiptModal,
-} from './components/modals/index.js';
+
+const ClientsView = lazy(() => import('./components/views/ClientsView.jsx'));
+const ReferralsView = lazy(() => import('./components/views/ReferralsView.jsx'));
+const ManagerView = lazy(() => import('./components/views/ManagerView.jsx'));
+const PerformanceView = lazy(() => import('./components/views/PerformanceView.jsx'));
+const SalesForm = lazy(() => import('./components/views/SalesForm.jsx'));
+const SalesList = lazy(() => import('./components/views/SalesList.jsx'));
+const ReceiptModalLazy = lazy(() => import('./components/modals/ReceiptModal.jsx'));
+const BackupModalLazy = lazy(() => import('./components/modals/BackupModal.jsx'));
+const LogoutModalLazy = lazy(() => import('./components/modals/LogoutModal.jsx'));
+const ConfirmSaleModalLazy = lazy(() => import('./components/modals/ConfirmSaleModal.jsx'));
+const ConfirmChangeModalLazy = lazy(() => import('./components/modals/ConfirmChangeModal.jsx'));
+const DateLockModalLazy = lazy(() => import('./components/modals/DateLockModal.jsx'));
+const ClientSearchModalLazy = lazy(() => import('./components/modals/ClientSearchModal.jsx'));
+const ClientHistoryModalLazy = lazy(() => import('./components/modals/ClientHistoryModal.jsx'));
+const ClientDataModalLazy = lazy(() => import('./components/modals/ClientDataModal.jsx'));
+const ManagerAuthModalLazy = lazy(() => import('./components/modals/ManagerAuthModal.jsx'));
+const BirthdayAlertModalLazy = lazy(() => import('./components/modals/BirthdayAlertModal.jsx'));
+const CommissionModalLazy = lazy(() => import('./components/modals/CommissionModal.jsx'));
+const ConfirmClientUpdateModalLazy = lazy(() => import('./components/modals/ConfirmClientUpdateModal.jsx'));
+const ClientDetailsModalLazy = lazy(() => import('./components/modals/ClientDetailsModal.jsx'));
 import { db } from './firebase.js';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import {
@@ -32,21 +42,19 @@ import {
   verifyPassword,
 } from './utils.js';
 import { salesService, clientService, authService, backupService } from './services/index.js';
-import { useSaleForm } from './hooks/useSaleForm.js';
-import { useFilters } from './hooks/useFilters.js';
-import { useNotifications } from './hooks/useNotifications.js';
-import { useAuth } from './hooks/useAuth.js';
 
 // Contexts
 import { useSalesContext } from './contexts/SalesContext.jsx';
 import { useClientContext } from './contexts/ClientContext.jsx';
 import { useUIContext } from './contexts/UIContext.jsx';
+import { useApp } from './hooks/useApp.ts';
 
 const App = () => {
-  // ── Dados do Firestore via Contexts ──────────────────────────────────────
+  const app = useApp();
   const { sales } = useSalesContext();
   const { clients } = useClientContext();
   const ui = useUIContext();
+  const { auth: authState, form, filters, notifications } = app;
   const {
     currentView: currentViewState, setCurrentView: setCurrentViewState,
     isOnline, handleOnline, handleOffline,
@@ -56,15 +64,7 @@ const App = () => {
     isNotificationsDropdownOpen, setIsNotificationsDropdownOpen,
   } = ui;
 
-  // ── Autenticação ─────────────────────────────────────────────────────────
-  const authState = useAuth();
-
-  // ── Form, filtros, notificações ──────────────────────────────────────────
-  const form = useSaleForm();
-  const filters = useFilters(sales, clients);
-  const notifications = useNotifications(authState.isLoggedIn, sales, clients);
-
-  // ── Estado local restante ────────────────────────────────────────────────
+  // Estado local restante
   const [routineState, setRoutineState] = useState({});
   const [reminders, setReminders] = useState([]);
   const [managerPassword, setManagerPassword] = useState('');
@@ -73,6 +73,7 @@ const App = () => {
   const [dateLockPassword, setDateLockPassword] = useState('');
   const [selectedClientForEdit, setSelectedClientForEdit] = useState(null);
   const [selectedClientHistory, setSelectedClientHistory] = useState(null);
+  const [clientDetailsData, setClientDetailsData] = useState(null);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [alertModalOpen, setAlertModalOpen] = useState(false);
   const [alertData, setAlertData] = useState({ message: '', phase: '' });
@@ -80,7 +81,7 @@ const App = () => {
   const [currentReceipt, setCurrentReceipt] = useState(null);
   const fileInputInternalRef = useRef(null);
 
-  // ── Efeitos de inicialização ─────────────────────────────────────────────
+  // Efeitos de inicialização
   useEffect(() => {
     authState.loadSavedSession();
   }, [authState.loadSavedSession]);
@@ -100,7 +101,7 @@ const App = () => {
     return () => unsub();
   }, []);
 
-  // Online/offline (delegates para UIContext)
+  // Online/offline
   useEffect(() => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -125,7 +126,7 @@ const App = () => {
     else document.body.classList.remove('receipt-open');
   }, [modals.receipt?.open]);
 
-  // Datas únicas das vendas (memoizado para evitar recálculo a cada render)
+  // Datas únicas das vendas (memoizado)
   const sortedSaleDates = useMemo(
     () => [...new Set(sales.map((s) => s.date))].filter(Boolean).sort(),
     [sales],
@@ -174,7 +175,7 @@ const App = () => {
     return () => clearInterval(interval);
   }, [authState.isLoggedIn, routineState, lastAlertTime, authState.settings.employeeName]);
 
-  // ── Handlers de rotina ────────────────────────────────────────────────────
+  // Handlers de rotina
   const toggleRoutine = useCallback((category, index) => {
     const key = `${category}-${index}`;
     const today = new Date().toISOString().split('T')[0];
@@ -182,7 +183,7 @@ const App = () => {
     setDoc(doc(db, 'rotina_state', today), { [key]: newVal }, { merge: true });
   }, [routineState]);
 
-  // ── Handlers de cliente / formulário ─────────────────────────────────────
+  // Handlers de cliente / formulário
   const handleCpfChange = useCallback((e) => {
     const val = maskCPF(e.target.value);
     form.setClientCpf(val);
@@ -209,7 +210,6 @@ const App = () => {
           form.setClientNeighborhood(data.bairro);
           showToast('Endereço encontrado!');
         } else {
-          // S-6 fix: informar o usuário quando o CEP não é encontrado
           showToast('CEP não encontrado. Verifique o número.', 'error');
         }
       } catch (err) {
@@ -243,7 +243,7 @@ const App = () => {
     return clientId;
   }, [form, clients, authState.settings, showToast]);
 
-  // ── Handlers de itens e pagamentos ───────────────────────────────────────
+  // Handlers de itens e pagamentos
   const handleAddItem = useCallback(() => {
     if (!form.category) { showToast('Selecione a Categoria primeiro', 'error'); return; }
     if (!form.newItemType) { showToast('Selecione o Tipo do item', 'error'); return; }
@@ -251,12 +251,12 @@ const App = () => {
     if (form.newItemImei?.trim()) {
       const imeiClean = form.newItemImei.trim();
       if (form.items.some((i) => i.imei?.trim() === imeiClean && i.id !== form.editingItemId)) {
-        showToast('⚠️ IMEI já adicionado nesta venda!', 'error'); return;
+        showToast('IMEI já adicionado nesta venda!', 'error'); return;
       }
       if (sales.some((s) => {
         if (form.editingId && s.id === form.editingId) return false;
         return (s.items || []).some((i) => i.imei?.trim() === imeiClean);
-      })) { showToast('⚠️ IMEI já registrado em outra venda!', 'error'); return; }
+      })) { showToast('IMEI já registrado em outra venda!', 'error'); return; }
     }
     let finalPrice = parseCurrency(form.newItemPrice);
     let finalDiscount = parseCurrency(form.newItemDiscount);
@@ -344,19 +344,27 @@ const App = () => {
     form.setCurrentPaymentAmount(formatCurrency(floatVal));
   }, [form]);
 
-  // ── Salvar/excluir venda ──────────────────────────────────────────────────
-  const performSave = useCallback(() => {
-    // Salva/atualiza o cliente e obtém o clientId
+  // Salvar/excluir venda
+  const performSave = useCallback(async () => {
     const clientId = form.clientName ? handleSaveClient() : null;
 
     const saleId = form.editingId || salesService.generateId();
+    
+    let contractPdfUrl = null;
+    if (form.contractPdf) {
+      try {
+        contractPdfUrl = await salesService.uploadContract(saleId, form.contractPdf);
+      } catch (err) {
+        showToast('Erro ao fazer upload do contrato: ' + err.message, 'error');
+        return;
+      }
+    }
+
     const saleData = {
       id: saleId,
       date: form.date,
       timestamp: new Date().toISOString(),
-      // Novo campo: referência normalizada ao cliente
       ...(clientId && { clientId }),
-      // Campos legados mantidos para compatibilidade com docs antigos
       clientName: form.clientName, clientCpf: form.clientCpf, clientPhone: form.clientPhone,
       clientEmail: form.clientEmail, clientDob: form.clientDob, clientAddress: form.clientAddress,
       clientNumber: form.clientNumber, clientCity: form.clientCity, clientZip: form.clientZip,
@@ -371,6 +379,7 @@ const App = () => {
       change: form.changeAmount,
       clientSource: form.clientSource,
       paymentObservation: form.paymentObservation,
+      ...(contractPdfUrl && { contractPdfUrl }),
     };
     salesService.save(saleData)
       .then(() => {
@@ -393,6 +402,15 @@ const App = () => {
     e.preventDefault();
     if (form.items.length === 0) { showToast('Adicione itens!', 'error'); return; }
     const isRefundOrExchangeCredit = form.finalTotal < 0;
+    
+    const crediarioCategories = ['Crediario Payjoy', 'Crediario Crefaz', 'Crediario Paymobi'];
+    const isCrediario = crediarioCategories.includes(form.category);
+    
+    if (isCrediario && !form.contractPdf) {
+      showToast('Contrato PDF é obrigatório para vendas crediaristas!', 'error');
+      return;
+    }
+    
     if (!isRefundOrExchangeCredit && form.remainingToPay > 0.02) {
       showToast('Valor pago insuficiente.', 'error'); return;
     }
@@ -400,7 +418,7 @@ const App = () => {
     openModal('confirmSale');
   }, [form, showToast, openModal]);
 
-  // ── Auth de gerente ───────────────────────────────────────────────────────
+  // Auth de gerente
   const handleManagerAuth = useCallback(async () => {
     const isValid = await authService.verifyManagerPassword(managerPassword);
     if (isValid) {
@@ -415,7 +433,7 @@ const App = () => {
     }
   }, [managerPassword, pendingAuthAction, pendingEditItem, performSave, performDelete, form, closeModal, showToast]);
 
-  // ── Atualizar dados do cliente ────────────────────────────────────────────
+  // Atualizar dados do cliente
   const performClientUpdate = useCallback(async () => {
     const originalClient = clients.find((c) => c.id === selectedClientForEdit.id);
     const originalCpf = originalClient?.cpf ? originalClient.cpf.replace(/\D/g, '') : null;
@@ -445,7 +463,7 @@ const App = () => {
     openModal('managerAuth');
   }, [openModal]);
 
-  // ── Backup ────────────────────────────────────────────────────────────────
+  // Backup
   const handleExportBackup = useCallback(async () => {
     try {
       const result = await backupService.exportToFile(sales, clients, authState.settings);
@@ -473,7 +491,7 @@ const App = () => {
     } catch (error) { showToast('Erro: ' + error.message, 'error'); }
   }, [showToast, closeModal]);
 
-  // ── Impressão ─────────────────────────────────────────────────────────────
+  // Impressão
   const handleExportReceiptPDF = useCallback((mode) => {
     const element = document.getElementById('receipt-paper');
     if (!element) { showToast('Recibo não encontrado', 'error'); return; }
@@ -487,7 +505,7 @@ const App = () => {
     iframeDoc.open(); iframeDoc.write(html); iframeDoc.close();
     iframe.contentWindow.focus();
     setTimeout(() => {
-      try { iframe.contentWindow.print(); showToast('Diálogo de impressão aberto!'); }
+      try { iframe.contentWindow.print(); showToast('Dialogo de impressao aberto!'); }
       catch (e) { showToast('Erro: ' + e.message, 'error'); }
       setTimeout(() => document.body.removeChild(iframe), 60_000);
     }, 1000);
@@ -501,7 +519,6 @@ const App = () => {
       const clone = source.cloneNode(true);
       clone.querySelectorAll('.no-print').forEach((el) => el.remove());
 
-      // Monta o cabeçalho de impressão via DOM — sem innerHTML
       const totalValue = filters.filteredSales.reduce((s, i) => s + (i.amountPaid || i.amount), 0);
       const ph = clone.querySelector('.print-header');
       if (ph) {
@@ -523,7 +540,7 @@ const App = () => {
     }, 250);
   }, [filters, showToast]);
 
-  // ── Histórico e dados do cliente ─────────────────────────────────────────
+  // Histórico e dados do cliente
   const handleViewHistory = useCallback((client) => {
     const cleanTargetCpf = client.cpf ? client.cpf.replace(/\D/g, '') : null;
     const targetName = (client.name || '').trim().toLowerCase();
@@ -542,12 +559,30 @@ const App = () => {
     openModal('clientData');
   }, [openModal]);
 
+  const openClientDetails = useCallback((sale) => {
+    const clientData = {
+      clientName: sale.clientName,
+      clientCpf: sale.clientCpf,
+      clientPhone: sale.clientPhone,
+      clientEmail: sale.clientEmail,
+      clientDob: sale.clientDob ? formatDateBR(sale.clientDob) : '',
+      clientAddress: sale.clientAddress,
+      clientNumber: sale.clientNumber,
+      clientNeighborhood: sale.clientNeighborhood,
+      clientCity: sale.clientCity,
+      clientState: sale.clientState,
+      clientZip: sale.clientZip,
+    };
+    setClientDetailsData(clientData);
+    openModal('clientDetails');
+  }, [openModal]);
+
   const openReceipt = useCallback(
     (sale) => { setCurrentReceipt(sale); openModal('receipt'); },
     [openModal],
   );
 
-  // ── Dados derivados ───────────────────────────────────────────────────────
+  // Dados derivados
   const filteredClients = useMemo(() => {
     if (!clientSearchTerm) return clients;
     const term = clientSearchTerm.toLowerCase();
@@ -558,7 +593,7 @@ const App = () => {
     );
   }, [clients, clientSearchTerm]);
 
-  // ── Tela de login ─────────────────────────────────────────────────────────
+  // Tela de login
   if (!authState.isLoggedIn) {
     return (
       <LoginScreen
@@ -566,7 +601,7 @@ const App = () => {
         setToasts={(updater) => {
           if (typeof updater === 'function') {
             // LoginScreen chama setToasts com filter function
-            // Ignoramos — ToastContainer usa removeToast do UIContext
+            // Ignoramos
           }
         }}
         SELLERS_LIST={SELLERS_LIST}
@@ -588,7 +623,7 @@ const App = () => {
     );
   }
 
-  // ── App principal ─────────────────────────────────────────────────────────
+  // App principal
   return (
     <div className="min-h-screen font-sans pb-32 print:bg-white print:pb-0">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
@@ -643,15 +678,23 @@ const App = () => {
         {currentViewState === 'calendar' ? (
           <SimpleCalendar routineState={routineState} toggleRoutine={toggleRoutine} reminders={reminders} setReminders={setReminders} />
         ) : currentViewState === 'clients' ? (
-          <ClientsView clients={clients} filteredClients={filteredClients} clientSearchTerm={clientSearchTerm} setClientSearchTerm={setClientSearchTerm} handleViewHistory={handleViewHistory} handleOpenClientData={handleOpenClientData} fillClientData={form.fillClientData} setCurrentView={setCurrentViewState} />
+          <Suspense fallback={<PageLoader />}>
+            <ClientsView clients={clients} filteredClients={filteredClients} clientSearchTerm={clientSearchTerm} setClientSearchTerm={setClientSearchTerm} handleViewHistory={handleViewHistory} handleOpenClientData={handleOpenClientData} fillClientData={form.fillClientData} setCurrentView={setCurrentViewState} />
+          </Suspense>
         ) : currentViewState === 'referrals' ? (
-          <ReferralsView sales={sales} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
+          <Suspense fallback={<PageLoader />}>
+            <ReferralsView sales={sales} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
+          </Suspense>
         ) : currentViewState === 'manager' ? (
-          <ManagerView sales={sales} formatCurrency={formatCurrency} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} />
+          <Suspense fallback={<PageLoader />}>
+            <ManagerView sales={sales} formatCurrency={formatCurrency} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} />
+          </Suspense>
         ) : currentViewState === 'performance' ? (
-          <PerformanceView sales={sales} clients={clients} settings={authState.settings} formatCurrency={formatCurrency} monthlyChartData={notifications.monthlyChartData} setCommissionModalOpen={() => openModal('commission')} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} />
+          <Suspense fallback={<PageLoader />}>
+            <PerformanceView sales={sales} clients={clients} settings={authState.settings} formatCurrency={formatCurrency} monthlyChartData={notifications.monthlyChartData} setCommissionModalOpen={() => openModal('commission')} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} />
+          </Suspense>
         ) : (
-          <>
+          <Suspense fallback={<PageLoader />}>
             <SalesForm
               date={form.date} setDate={form.setDate} isDateLocked={form.isDateLocked} setDateLockModalOpen={() => openModal('dateLock')} setIsDateLocked={form.setIsDateLocked}
               category={form.category} setCategory={form.setCategory}
@@ -670,6 +713,7 @@ const App = () => {
               currentInstallments={form.currentInstallments} setCurrentInstallments={form.setCurrentInstallments} editingPaymentId={form.editingPaymentId} setEditingPaymentId={form.setEditingPaymentId}
               clientSource={form.clientSource} setClientSource={form.setClientSource}
               paymentObservation={form.paymentObservation} setPaymentObservation={form.setPaymentObservation}
+              contractPdf={form.contractPdf} setContractPdf={form.setContractPdf}
               editingId={form.editingId} resetForm={form.resetForm}
               totalAmount={form.totalAmount} totalDiscount={form.totalDiscount} finalTotal={form.finalTotal} remainingToPay={form.remainingToPay} totalPaid={form.totalPaid} changeAmount={form.changeAmount}
               handleAddItem={handleAddItem} handleEditItem={form.handleEditItem} handleAddPayment={handleAddPayment} handleEditPayment={form.handleEditPayment} handleRemovePayment={handleRemovePayment}
@@ -680,46 +724,81 @@ const App = () => {
               CATEGORIES_LIST={CATEGORIES_LIST} PRODUCT_TYPES={PRODUCT_TYPES} RAM_STORAGE_OPTIONS={RAM_STORAGE_OPTIONS} PAYMENT_METHODS={PAYMENT_METHODS} PAYMENT_TYPES={PAYMENT_TYPES} UF_LIST={UF_LIST}
               formatCurrency={formatCurrency}
             />
-            <SalesList
-              filteredSales={filters.filteredSales} groupedSales={filters.groupedSales} groupBy={filters.groupBy} settings={authState.settings}
-              filterDate={filters.filterDate} searchTerm={filters.searchTerm} filterMode={filters.filterMode}
-              setFilterMode={filters.setFilterMode} setFilterDate={filters.setFilterDate} setSearchTerm={filters.setSearchTerm}
-              handlePrevDate={filters.handlePrevDate} handleNextDate={filters.handleNextDate}
-              currentPage={filters.currentPage} setCurrentPage={filters.setCurrentPage} totalPages={filters.totalPages}
-              openReceipt={openReceipt}
-              startEdit={(sale) => { setPendingEditItem(sale); setPendingAuthAction('edit'); openModal('managerAuth'); }}
-              pendingEditItem={pendingEditItem} setPendingEditItem={setPendingEditItem}
-              setPendingAuthAction={setPendingAuthAction} setManagerAuthModalOpen={() => openModal('managerAuth')}
-              formatCurrency={formatCurrency} formatDateBR={formatDateBR}
-              printSalesList={printSalesList} getPaymentStyles={getPaymentStyles}
-            />
-          </>
+          </Suspense>
         )}
       </div>
 
-      {/* Modal de edição de dados do cliente — S-3: extraído para ClientDataModal */}
-      <ClientDataModal
-        isOpen={modals.clientData?.open}
-        onClose={() => closeModal('clientData')}
-        selectedClientForEdit={selectedClientForEdit}
-        onFieldChange={handleClientDataChange}
-        onConfirm={confirmClientUpdate}
-        UF_LIST={UF_LIST}
-      />
+      {currentViewState !== 'calendar' && currentViewState !== 'clients' && currentViewState !== 'referrals' && currentViewState !== 'manager' && currentViewState !== 'performance' && (
+        <Suspense fallback={<PageLoader />}>
+          <SalesList
+            filteredSales={filters.filteredSales} groupedSales={filters.groupedSales} groupBy={filters.groupBy} settings={authState.settings}
+            filterDate={filters.filterDate} searchTerm={filters.searchTerm} filterMode={filters.filterMode}
+            setFilterMode={filters.setFilterMode} setFilterDate={filters.setFilterDate} setSearchTerm={filters.setSearchTerm}
+            handlePrevDate={filters.handlePrevDate} handleNextDate={filters.handleNextDate}
+            currentPage={filters.currentPage} setCurrentPage={filters.setCurrentPage} totalPages={filters.totalPages}
+            openReceipt={openReceipt}
+            startEdit={(sale) => { setPendingEditItem(sale); setPendingAuthAction('edit'); openModal('managerAuth'); }}
+            pendingEditItem={pendingEditItem} setPendingEditItem={setPendingEditItem}
+            setPendingAuthAction={setPendingAuthAction} setManagerAuthModalOpen={() => openModal('managerAuth')}
+            formatCurrency={formatCurrency} formatDateBR={formatDateBR}
+            printSalesList={printSalesList} getPaymentStyles={getPaymentStyles}
+            openClientDetails={openClientDetails}
+          />
+        </Suspense>
+      )}
+
+      {/* Modal de edição de dados do cliente */}
+      <Suspense fallback={null}>
+        <ClientDataModalLazy
+          isOpen={modals.clientData?.open}
+          onClose={() => closeModal('clientData')}
+          selectedClientForEdit={selectedClientForEdit}
+          onFieldChange={handleClientDataChange}
+          onConfirm={confirmClientUpdate}
+          UF_LIST={UF_LIST}
+        />
+      </Suspense>
 
       {/* Modais */}
-      <ReceiptModal isOpen={modals.receipt?.open} onClose={() => closeModal('receipt')} receipt={currentReceipt} onPrint={handleExportReceiptPDF} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
-      <BackupModal isOpen={modals.backup?.open} onClose={() => closeModal('backup')} onExport={handleExportBackup} onSaveToCloud={handleSaveToCloud} fileInputRef={fileInputInternalRef} />
-      <LogoutModal isOpen={modals.logout?.open} onClose={() => closeModal('logout')} onExportBackup={handleExportBackup} onSaveToCloud={handleSaveToCloud} onLogout={() => { authState.logout(); closeModal('logout'); }} />
-      <ConfirmSaleModal isOpen={modals.confirmSale?.open} onClose={() => closeModal('confirmSale')} onConfirm={() => { closeModal('confirmSale'); performSave(); }} />
-      <ConfirmChangeModal isOpen={modals.confirmChange?.open} onClose={() => closeModal('confirmChange')} onConfirm={() => { closeModal('confirmChange'); openModal('confirmSale'); }} changeAmount={form.changeAmount} formatCurrency={formatCurrency} />
-      <DateLockModal isOpen={modals.dateLock?.open} onClose={() => { closeModal('dateLock'); setDateLockPassword(''); }} dateLockPassword={dateLockPassword} setDateLockPassword={setDateLockPassword} onUnlock={() => { form.setIsDateLocked(false); closeModal('dateLock'); setDateLockPassword(''); showToast('Data liberada!'); }} MANAGER_HASH={MANAGER_HASH} hashPassword={verifyPassword} showToast={showToast} />
-      <ClientSearchModal isOpen={modals.clientSearch?.open} onClose={() => closeModal('clientSearch')} searchTerm={clientSearchTerm} setSearchTerm={setClientSearchTerm} filteredClients={filteredClients} onSelectClient={(c) => { form.fillClientData(c); closeModal('clientSearch'); }} />
-      <ClientHistoryModal isOpen={modals.clientHistory?.open} onClose={() => closeModal('clientHistory')} selectedClientHistory={selectedClientHistory} openReceipt={openReceipt} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
-      <BirthdayAlertModal isOpen={notifications.todayBirthdays.length > 0 && modals.birthdayAlert?.open} onClose={() => closeModal('birthdayAlert')} todayBirthdays={notifications.todayBirthdays} />
-      <CommissionModal isOpen={modals.commission?.open} onClose={() => closeModal('commission')} sales={sales} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} formatCurrency={formatCurrency} />
-      <ManagerAuthModal isOpen={modals.managerAuth?.open} onClose={() => closeModal('managerAuth')} managerPassword={managerPassword} setManagerPassword={setManagerPassword} onAuth={handleManagerAuth} pendingAuthAction={pendingAuthAction} />
-      <ConfirmClientUpdateModal isOpen={modals.confirmClientUpdate?.open} onClose={() => closeModal('confirmClientUpdate')} onConfirm={performClientUpdate} />
+      <Suspense fallback={null}>
+        <ReceiptModalLazy isOpen={modals.receipt?.open} onClose={() => closeModal('receipt')} receipt={currentReceipt} onPrint={handleExportReceiptPDF} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <BackupModalLazy isOpen={modals.backup?.open} onClose={() => closeModal('backup')} onExport={handleExportBackup} onSaveToCloud={handleSaveToCloud} fileInputRef={fileInputInternalRef} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <LogoutModalLazy isOpen={modals.logout?.open} onClose={() => closeModal('logout')} onExportBackup={handleExportBackup} onSaveToCloud={handleSaveToCloud} onLogout={() => { authState.logout(); closeModal('logout'); }} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ConfirmSaleModalLazy isOpen={modals.confirmSale?.open} onClose={() => closeModal('confirmSale')} onConfirm={() => { closeModal('confirmSale'); performSave(); }} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ConfirmChangeModalLazy isOpen={modals.confirmChange?.open} onClose={() => closeModal('confirmChange')} onConfirm={() => { closeModal('confirmChange'); openModal('confirmSale'); }} changeAmount={form.changeAmount} formatCurrency={formatCurrency} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DateLockModalLazy isOpen={modals.dateLock?.open} onClose={() => { closeModal('dateLock'); setDateLockPassword(''); }} dateLockPassword={dateLockPassword} setDateLockPassword={setDateLockPassword} onUnlock={() => { form.setIsDateLocked(false); closeModal('dateLock'); setDateLockPassword(''); showToast('Data liberada!'); }} MANAGER_HASH={MANAGER_HASH} hashPassword={verifyPassword} showToast={showToast} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ClientSearchModalLazy isOpen={modals.clientSearch?.open} onClose={() => closeModal('clientSearch')} searchTerm={clientSearchTerm} setSearchTerm={setClientSearchTerm} filteredClients={filteredClients} onSelectClient={(c) => { form.fillClientData(c); closeModal('clientSearch'); }} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ClientHistoryModalLazy isOpen={modals.clientHistory?.open} onClose={() => closeModal('clientHistory')} selectedClientHistory={selectedClientHistory} openReceipt={openReceipt} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <BirthdayAlertModalLazy isOpen={notifications.todayBirthdays.length > 0 && modals.birthdayAlert?.open} onClose={() => closeModal('birthdayAlert')} todayBirthdays={notifications.todayBirthdays} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <CommissionModalLazy isOpen={modals.commission?.open} onClose={() => closeModal('commission')} sales={sales} SELLERS_LIST={SELLERS_LIST} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} formatCurrency={formatCurrency} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ManagerAuthModalLazy isOpen={modals.managerAuth?.open} onClose={() => closeModal('managerAuth')} managerPassword={managerPassword} setManagerPassword={setManagerPassword} onAuth={handleManagerAuth} pendingAuthAction={pendingAuthAction} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ConfirmClientUpdateModalLazy isOpen={modals.confirmClientUpdate?.open} onClose={() => closeModal('confirmClientUpdate')} onConfirm={performClientUpdate} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ClientDetailsModalLazy isOpen={modals.clientDetails?.open} onClose={() => closeModal('clientDetails')} clientData={clientDetailsData} formatDateBR={formatDateBR} />
+      </Suspense>
 
       {/* Footer */}
       <div className="max-w-6xl mx-auto px-6 pb-6 no-print">

@@ -1,6 +1,6 @@
 import Icons from './Icons.jsx';
 
-const TaskAlertModal = ({ isOpen, onClose, onGoToCalendar, message, phase, userName }) => {
+const TaskAlertModal = ({ isOpen, onClose, onGoToCalendar, phase, userName }) => {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-lg animate-in fade-in duration-500">

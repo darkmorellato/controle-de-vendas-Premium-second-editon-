@@ -3,6 +3,16 @@ import Icons from '../Icons.jsx';
 export default function ClientHistoryModal({ isOpen, onClose, selectedClientHistory, openReceipt, formatCurrency, formatDateBR }) {
     if (!isOpen || !selectedClientHistory) return null;
 
+    const openContractPdf = (pdfUrl) => {
+        if (!pdfUrl) return;
+        fetch(pdfUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+            });
+    };
+
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-lg no-print animate-in fade-in duration-500" onClick={onClose}>
             <div className="classic-frame rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-500 border border-white/20" onClick={e => e.stopPropagation()}>
@@ -30,7 +40,13 @@ export default function ClientHistoryModal({ isOpen, onClose, selectedClientHist
                                     </div>
                                         );
                                     })}</div></div>
-                                    <div className="md:w-64 flex flex-col justify-between border-l border-white/10 pl-8 border-dashed"><div><span className="text-xs font-bold text-slate-400 uppercase mb-4 block tracking-widest">Pagamento</span><div className="space-y-3">{(sale.payments || []).map((p, idx) => (<div key={idx} className="flex justify-between text-xs font-bold text-slate-400 uppercase bg-white/5 p-2 rounded-lg"><span>{p.method}</span><span className="font-mono">{formatCurrency(p.amount)}</span></div>))}</div></div><div className="mt-6 pt-6 border-t border-white/10 flex justify-between items-center"><span className="text-xs font-black text-slate-400 uppercase tracking-wider">Total</span><span className="text-2xl font-black text-slate-200">{formatCurrency(sale.amountPaid || sale.amount)}</span></div><button onClick={() => openReceipt(sale)} className="w-full mt-5 py-4 bg-white/10 text-white text-xs font-bold rounded-2xl hover:bg-white/20 transition-all shadow-lg active:scale-95 uppercase tracking-wide border border-white/10">Ver Recibo</button>
+                                    <div className="md:w-64 flex flex-col justify-between border-l border-white/10 pl-8 border-dashed"><div><span className="text-xs font-bold text-slate-400 uppercase mb-4 block tracking-widest">Pagamento</span><div className="space-y-3">{(sale.payments || []).map((p, idx) => (<div key={idx} className="flex justify-between text-xs font-bold text-slate-400 uppercase bg-white/5 p-2 rounded-lg"><span>{p.method}</span><span className="font-mono">{formatCurrency(p.amount)}</span></div>))}</div></div><div className="mt-6 pt-6 border-t border-white/10 flex justify-between items-center"><span className="text-xs font-black text-slate-400 uppercase tracking-wider">Total</span><span className="text-2xl font-black text-slate-200">{formatCurrency(sale.amountPaid || sale.amount)}</span></div>
+                                        {sale.contractPdfUrl && (
+                                            <button onClick={() => openContractPdf(sale.contractPdfUrl)} className="w-full mt-5 py-4 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-2xl hover:bg-red-500/20 transition-all shadow-lg active:scale-95 uppercase tracking-wide flex items-center justify-center gap-2">
+                                                <Icons.FileText className="w-4 h-4" /> Ver Contrato PDF
+                                            </button>
+                                        )}
+                                        <button onClick={() => openReceipt(sale)} className="w-full mt-5 py-4 bg-white/10 text-white text-xs font-bold rounded-2xl hover:bg-white/20 transition-all shadow-lg active:scale-95 uppercase tracking-wide border border-white/10">Ver Recibo</button>
                                                 {selectedClientHistory.client.phone && (
                                                     <a href={`https://wa.me/55${(selectedClientHistory.client.phone||'').replace(/\D/g,'')}?text=${encodeURIComponent('Olá ' + (selectedClientHistory.client.name||'') + '! Tudo bem? 😊 Passando para saber se está satisfeito(a) com sua compra na Miplace Premium. Qualquer dúvida estamos à disposição!')}`} target="_blank" rel="noopener noreferrer" className="w-full mt-2 py-4 bg-green-500/10 border border-green-500/20 text-green-600 text-xs font-bold rounded-2xl hover:bg-green-500/20 transition-all shadow-lg active:scale-95 uppercase tracking-wide flex items-center justify-center gap-2">
                                                         <Icons.WhatsApp className="w-4 h-4" /> Follow-up WhatsApp

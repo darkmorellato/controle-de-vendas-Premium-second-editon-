@@ -20,4 +20,3 @@ const HeaderClock = () => {
 };
 
 export { ClockProvider, useClock, RealTimeClock, HeaderClock };
-export default { ClockProvider, useClock, RealTimeClock, HeaderClock };

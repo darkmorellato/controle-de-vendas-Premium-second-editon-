@@ -77,6 +77,8 @@ export function useSaleForm() {
     setClientSource:       meta.setClientSource,
     paymentObservation:    meta.paymentObservation,
     setPaymentObservation: meta.setPaymentObservation,
+    contractPdf:           meta.contractPdf,
+    setContractPdf:        meta.setContractPdf,
 
     // Cliente
     clientName:         client.clientName,
@@ -160,9 +162,9 @@ export function useSaleForm() {
     startEdit,
   }), [
     meta.date, meta.isDateLocked, meta.editingId, meta.originalEmployeeName,
-    meta.category, meta.clientSource, meta.paymentObservation,
+    meta.category, meta.clientSource, meta.paymentObservation, meta.contractPdf,
     meta.setDate, meta.setIsDateLocked, meta.setEditingId, meta.setOriginalEmployeeName,
-    meta.setCategory, meta.setClientSource, meta.setPaymentObservation,
+    meta.setCategory, meta.setClientSource, meta.setPaymentObservation, meta.setContractPdf,
 
     client.clientName, client.clientCpf, client.clientPhone, client.clientEmail,
     client.clientDob, client.clientAddress, client.clientNumber, client.clientCity,

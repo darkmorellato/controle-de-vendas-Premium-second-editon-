@@ -19,6 +19,7 @@ const SalesForm = ({
     currentInstallments, setCurrentInstallments, editingPaymentId, setEditingPaymentId,
     clientSource, setClientSource,
     paymentObservation, setPaymentObservation,
+    contractPdf, setContractPdf,
     editingId, resetForm,
     totalAmount, totalDiscount, finalTotal, remainingToPay, totalPaid, changeAmount,
     handleAddItem, handleEditItem, handleAddPayment, handleEditPayment, handleRemovePayment,
@@ -130,6 +131,49 @@ const SalesForm = ({
                                 </datalist>
                             </div>
                         </div>
+
+                        {['Crediario Payjoy', 'Crediario Crefaz', 'Crediario Paymobi'].includes(category) && (
+                            <div className="border border-red-500/20 bg-gradient-to-br from-red-500/5 to-white/5 backdrop-blur-md rounded-[1.5rem] p-5 shadow-lg shadow-red-500/10 flex items-center gap-4 transition-all duration-300 hover:shadow-red-500/20 hover:border-red-500/30">
+                                <div className="p-2.5 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-xl shadow-lg text-red-400 border border-red-500/30 shrink-0"><Icons.FileText className="w-5 h-5" /></div>
+                                <div className="flex-1">
+                                    <h3 className="text-base font-bold text-slate-200 font-display mb-1">Contrato PDF</h3>
+                                    <p className="text-xs text-slate-400 mb-3">Obrigatório para vendas crediaristas (máx 5MB)</p>
+                                    <div className="flex items-center gap-3">
+                                        <label className="flex-1 cursor-pointer">
+                                            <input 
+                                                type="file" 
+                                                accept="application/pdf"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    if (file.size > 5 * 1024 * 1024) {
+                                                        alert('O arquivo deve ter no máximo 5MB');
+                                                        e.target.value = '';
+                                                        return;
+                                                    }
+                                                    if (file.type !== 'application/pdf') {
+                                                        alert('Apenas arquivos PDF são permitidos');
+                                                        e.target.value = '';
+                                                        return;
+                                                    }
+                                                    setContractPdf(file);
+                                                }}
+                                                className="hidden"
+                                            />
+                                            <span className="px-4 py-2.5 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl hover:bg-red-500/20 transition-all inline-flex items-center gap-2">
+                                                <Icons.Upload className="w-4 h-4" />
+                                                {contractPdf ? contractPdf.name : 'Selecionar PDF'}
+                                            </span>
+                                        </label>
+                                        {contractPdf && (
+                                            <span className="text-xs text-emerald-400 font-medium flex items-center gap-1">
+                                                <Icons.Check className="w-4 h-4" /> Selecionado
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex gap-5 pt-6 border-t border-white/10">{editingId && (<button type="button" onClick={resetForm} className="w-1/3 py-5 rounded-[2rem] font-bold text-slate-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all active-scale text-base uppercase tracking-wide shadow-sm">Cancelar</button>)}<button type="submit" className={`flex-1 py-5 rounded-[2rem] font-black shadow-vision transition-all active-scale text-lg uppercase tracking-wide btn-gold`}>{editingId ? "Atualizar Registro" : "Finalizar Lançamento"}</button></div>
                     </form>

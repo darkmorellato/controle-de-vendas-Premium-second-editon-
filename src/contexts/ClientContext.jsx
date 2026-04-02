@@ -10,6 +10,7 @@ const ClientContext = createContext(null);
  */
 export function ClientProvider({ children }) {
   const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let unsubClients = null;
@@ -19,11 +20,17 @@ export function ClientProvider({ children }) {
 
       if (user) {
         unsubClients = clientService.subscribe(
-          setClients,
-          (err) => console.error('Erro ao carregar clientes:', err),
+          (loaded) => {
+            setClients(loaded);
+            setLoading(false);
+          },
+          () => {
+            setLoading(false);
+          },
         );
       } else {
         setClients([]);
+        setLoading(false);
       }
     });
 
@@ -34,7 +41,7 @@ export function ClientProvider({ children }) {
   }, []);
 
   return (
-    <ClientContext.Provider value={{ clients }}>
+    <ClientContext.Provider value={{ clients, loading }}>
       {children}
     </ClientContext.Provider>
   );
@@ -42,7 +49,6 @@ export function ClientProvider({ children }) {
 
 /**
  * Hook para consumir clientes do Firestore.
- * @returns {{ clients: any[] }}
  */
 export function useClientContext() {
   const ctx = useContext(ClientContext);

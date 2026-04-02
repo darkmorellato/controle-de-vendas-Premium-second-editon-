@@ -11,10 +11,17 @@ const SalesContext = createContext(null);
  */
 export function SalesProvider({ children }) {
   const [sales, setSales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let unsubSales = null;
 
+    // Forçar login anônimo primeiro
+    authService.signInAnonymously()
+      .catch(() => {});
+
+    // Depois assinar auth
     const unsubAuth = authService.onAuthStateChanged((user) => {
       if (unsubSales) { unsubSales(); unsubSales = null; }
 
@@ -22,16 +29,21 @@ export function SalesProvider({ children }) {
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - SALES_WINDOW_DAYS);
         const cutoffStr = cutoff.toISOString().split('T')[0];
+
         unsubSales = salesService.subscribe(
           cutoffStr,
-          setSales,
-          (err) => console.error('Erro ao carregar vendas:', err),
+          (loaded) => {
+            setSales(loaded);
+            setLoading(false);
+          },
+          (err) => {
+            setError(err);
+            setLoading(false);
+          },
         );
       } else {
         setSales([]);
-        authService.signInAnonymously().catch((err) => {
-          console.error('Erro de autenticação anônima:', err);
-        });
+        setLoading(false);
       }
     });
 
@@ -42,7 +54,7 @@ export function SalesProvider({ children }) {
   }, []);
 
   return (
-    <SalesContext.Provider value={{ sales }}>
+    <SalesContext.Provider value={{ sales, loading, error }}>
       {children}
     </SalesContext.Provider>
   );
@@ -50,7 +62,6 @@ export function SalesProvider({ children }) {
 
 /**
  * Hook para consumir vendas do Firestore.
- * @returns {{ sales: any[] }}
  */
 export function useSalesContext() {
   const ctx = useContext(SalesContext);

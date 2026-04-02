@@ -6,7 +6,7 @@ import { SalesProvider } from './contexts/SalesContext.jsx';
 import { ClientProvider } from './contexts/ClientContext.jsx';
 import { UIProvider } from './contexts/UIContext.jsx';
 import './index.css';
-import App from './App.jsx';
+import App from './App';
 
 // NOTA: window.db e window.auth foram removidos por segurança.
 // Use os services (salesService, clientService, authService) para acessar Firebase.
