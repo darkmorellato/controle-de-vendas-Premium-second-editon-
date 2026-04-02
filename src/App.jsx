@@ -79,7 +79,8 @@ const App = () => {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [sellerFilter, setSellerFilter] = useState('todos');
   const [monthFilter, setMonthFilter] = useState('todos');
-  const [referralsMonthFilter, setReferralsMonthFilter] = useState('todos');
+  const currentMonth = new Date().toISOString().substring(0, 7); // "2026-04"
+  const [referralsMonthFilter, setReferralsMonthFilter] = useState(currentMonth);
   const [alertModalOpen, setAlertModalOpen] = useState(false);
   const [alertData, setAlertData] = useState({ message: '', phase: '' });
   const [lastAlertTime, setLastAlertTime] = useState(0);
@@ -601,9 +602,12 @@ const App = () => {
 
   const availableReferralMonths = useMemo(() => {
     const months = new Set();
+    const now = new Date();
+    const currentMonthStr = now.toISOString().substring(0, 7); // "2026-04"
+    months.add(currentMonthStr); // Sempre incluir mês atual
     sales.filter(s => s.clientSource && s.clientSource.trim()).forEach(s => {
       if (s.date) {
-        const month = s.date.substring(0, 7); // "2026-04"
+        const month = s.date.substring(0, 7);
         months.add(month);
       }
     });
