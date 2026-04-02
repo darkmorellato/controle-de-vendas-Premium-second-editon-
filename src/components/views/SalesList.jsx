@@ -11,13 +11,17 @@ function SalesList({
     formatCurrency, formatDateBR, printSalesList, getPaymentStyles,
     openClientDetails
 }) {
-    const openContractPdf = (pdfUrl) => {
+    const openContractPdf = async (pdfUrl) => {
         if (!pdfUrl) return;
-        const blob = fetch(pdfUrl).then(res => res.blob());
-        blob.then(blob => {
+        try {
+            const response = await fetch(pdfUrl);
+            const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             window.open(url, '_blank');
-        });
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        } catch (error) {
+            console.error('Erro ao abrir PDF:', error);
+        }
     };
     
     return (

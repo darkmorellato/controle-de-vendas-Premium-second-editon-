@@ -21,6 +21,7 @@ const SalesForm = ({
     paymentObservation, setPaymentObservation,
     contractPdf, setContractPdf,
     editingId, resetForm,
+    showToast,
     totalAmount, totalDiscount, finalTotal, remainingToPay, totalPaid, changeAmount,
     handleAddItem, handleEditItem, handleAddPayment, handleEditPayment, handleRemovePayment,
     handleSubmit, handleCpfChange, handleZipChange, maskPhone, maskDateStrict, maskIMEI,
@@ -147,12 +148,12 @@ const SalesForm = ({
                                                     const file = e.target.files?.[0];
                                                     if (!file) return;
                                                     if (file.size > 5 * 1024 * 1024) {
-                                                        alert('O arquivo deve ter no máximo 5MB');
+                                                        showToast?.('O arquivo deve ter no máximo 5MB', 'error') || alert('O arquivo deve ter no máximo 5MB');
                                                         e.target.value = '';
                                                         return;
                                                     }
                                                     if (file.type !== 'application/pdf') {
-                                                        alert('Apenas arquivos PDF são permitidos');
+                                                        showToast?.('Apenas arquivos PDF são permitidos', 'error') || alert('Apenas arquivos PDF são permitidos');
                                                         e.target.value = '';
                                                         return;
                                                     }

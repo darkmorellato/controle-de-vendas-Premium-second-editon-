@@ -715,6 +715,7 @@ const App = () => {
               paymentObservation={form.paymentObservation} setPaymentObservation={form.setPaymentObservation}
               contractPdf={form.contractPdf} setContractPdf={form.setContractPdf}
               editingId={form.editingId} resetForm={form.resetForm}
+              showToast={showToast}
               totalAmount={form.totalAmount} totalDiscount={form.totalDiscount} finalTotal={form.finalTotal} remainingToPay={form.remainingToPay} totalPaid={form.totalPaid} changeAmount={form.changeAmount}
               handleAddItem={handleAddItem} handleEditItem={form.handleEditItem} handleAddPayment={handleAddPayment} handleEditPayment={form.handleEditPayment} handleRemovePayment={handleRemovePayment}
               handleSubmit={handleSubmit} handleCpfChange={handleCpfChange} handleZipChange={handleZipChange} maskPhone={maskPhone} maskDateStrict={maskDateStrict} maskIMEI={maskIMEI}

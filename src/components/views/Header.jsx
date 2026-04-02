@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Icons from '../Icons.jsx';
 import { HeaderClock } from '../Clock.jsx';
 import NotificationsDropdown from '../NotificationsDropdown.jsx';
+import { useHeaderCalculations } from '../../hooks/useHeaderCalculations.ts';
 
 export default function Header({
     settings,
@@ -27,66 +28,24 @@ export default function Header({
     ELIGIBLE_FOR_GOAL
 }) {
     const [notificationsRead, setNotificationsRead] = useState(false);
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const todayReminders = reminders.filter(r => r.date === todayStr && !r.completed).length;
 
-    const recentClients = clients.filter(c => {
-        if (!c.createdAt) return false;
-        const thirtyDaysAgo = new Date(now);
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        return new Date(c.createdAt) >= thirtyDaysAgo;
-    }).length;
+    const {
+        todayReminders,
+        recentClients,
+        sellerGoalsAtRisk,
+        upcomingBirthdays,
+        hasNotifications,
+        totalNotifications
+    } = useHeaderCalculations({
+        sales,
+        clients,
+        reminders,
+        GOAL_SELLERS,
+        GOAL_MANAGER,
+        ELIGIBLE_FOR_GOAL
+    });
 
-    const sellerGoalsAtRisk = (() => {
-        const SELLERS_LIST = ['Gabriela Ferreira', 'Sabrina Almeida'];
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const daysLeft = daysInMonth - now.getDate();
-        if (daysLeft > 5) return 0;
-        let count = 0;
-        SELLERS_LIST.forEach(seller => {
-            const isMgr = seller === "Sabrina Almeida";
-            const target = isMgr ? GOAL_MANAGER : GOAL_SELLERS;
-            const sellerSales = sales.filter(s => {
-                const d = new Date((s.date || '') + 'T00:00:00');
-                if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) return false;
-                return isMgr ? true : s.employeeName === seller;
-            });
-            const units = sellerSales.reduce((acc, s) => {
-                const pos = (s.items||[]).filter(i => ELIGIBLE_FOR_GOAL.includes(i.type) && i.unitPrice > 0);
-                const neg = (s.items||[]).filter(i => ELIGIBLE_FOR_GOAL.includes(i.type) && i.unitPrice < 0);
-                return acc + pos.reduce((sum,i)=>sum+i.quantity,0) - neg.reduce((sum,i)=>sum+Math.abs(i.quantity),0);
-            }, 0);
-            if (units < target) count++;
-        });
-        return count;
-    })();
-
-    const upcomingBirthdays = (() => {
-        let count = 0;
-        for (let i = 0; i <= 5; i++) {
-            const d = new Date(now);
-            d.setDate(d.getDate() + i);
-            const dMM = String(d.getMonth() + 1).padStart(2, '0');
-            const dDD = String(d.getDate()).padStart(2, '0');
-            clients.forEach(c => {
-                if (c.dob) {
-                    const parts = c.dob.includes('-') ? c.dob.split('-') : c.dob.includes('/') ? c.dob.split('/') : null;
-                    if (parts && parts.length >= 2) {
-                        const mm = parts.length === 3 ? parts[1] : parts[0];
-                        const dd = parts.length === 3 ? parts[2] : parts[1];
-                        if (mm === dMM && dd === dDD) count++;
-                    }
-                }
-            });
-        }
-        return count;
-    })();
-
-    const hasNotifications = (todayReminders > 0 || recentClients > 0 || sellerGoalsAtRisk > 0 || upcomingBirthdays > 0) && !notificationsRead;
-    const totalNotifications = todayReminders + recentClients + sellerGoalsAtRisk + upcomingBirthdays;
+    const hasUnreadNotifications = hasNotifications && !notificationsRead;
     return (
         <div className="classic-frame sticky top-4 z-50 no-print transition-all duration-300 mx-4 md:mx-auto max-w-6xl rounded-[2.5rem] mt-4 shadow-vision mb-8 border border-white/60">
             <div className="px-6 py-4 flex justify-between items-center">
@@ -195,13 +154,13 @@ export default function Header({
 
                     <div className="relative notifications-dropdown flex items-center overflow-visible">
                         <button onClick={() => setIsNotificationsDropdownOpen(!isNotificationsDropdownOpen)}
-                            className={`p-3 rounded-[1.5rem] active-scale relative overflow-visible group ${isNotificationsDropdownOpen ? 'bg-[#c9a227]/30 text-[#c9a227]' : hasNotifications ? 'text-amber-400 animate-notification-pulse' : 'text-slate-400 hover:text-[#c9a227]'}`}
+                            className={`p-3 rounded-[1.5rem] active-scale relative overflow-visible group ${isNotificationsDropdownOpen ? 'bg-[#c9a227]/30 text-[#c9a227]' : hasUnreadNotifications ? 'text-amber-400 animate-notification-pulse' : 'text-slate-400 hover:text-[#c9a227]'}`}
                             onMouseEnter={e=>{ if(!isNotificationsDropdownOpen){ e.currentTarget.style.background='rgba(201,162,39,0.25)'; e.currentTarget.style.boxShadow='0 0 14px rgba(201,162,39,0.3)'; }}}
                             onMouseLeave={e=>{ if(!isNotificationsDropdownOpen){ e.currentTarget.style.background=''; e.currentTarget.style.boxShadow=''; }}}
                             title="Notificações">
                             <span className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none" style={{ background:'radial-gradient(ellipse at 50% 0%, rgba(201,162,39,0.4) 0%, transparent 70%)', transition:'opacity 0.3s' }}></span>
-                            <Icons.Bell className={`w-5 h-5 relative z-10 ${hasNotifications && !isNotificationsDropdownOpen ? 'animate-bell-shake' : ''}`} />
-                            {hasNotifications && !isNotificationsDropdownOpen && (
+                            <Icons.Bell className={`w-5 h-5 relative z-10 ${hasUnreadNotifications && !isNotificationsDropdownOpen ? 'animate-bell-shake' : ''}`} />
+                            {hasUnreadNotifications && !isNotificationsDropdownOpen && (
                                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/50 animate-notification-badge z-20 border border-white">
                                     {totalNotifications > 9 ? '9+' : totalNotifications}
                                 </span>
