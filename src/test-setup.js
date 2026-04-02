@@ -12,3 +12,16 @@ if (typeof globalThis.crypto === 'undefined' || !globalThis.crypto.subtle) {
     configurable: true,
   });
 }
+
+/**
+ * Mock das variáveis de ambiente do Firebase para testes
+ * (não disponíveis no CI)
+ */
+import { vi } from 'vitest';
+vi.stubEnv('VITE_FIREBASE_API_KEY', 'test-api-key');
+vi.stubEnv('VITE_FIREBASE_AUTH_DOMAIN', 'test.firebaseapp.com');
+vi.stubEnv('VITE_FIREBASE_PROJECT_ID', 'test-project');
+vi.stubEnv('VITE_FIREBASE_STORAGE_BUCKET', 'test.appspot.com');
+vi.stubEnv('VITE_FIREBASE_MESSAGING_SENDER_ID', '123456789');
+vi.stubEnv('VITE_FIREBASE_APP_ID', '1:123456789:web:test');
+vi.stubEnv('VITE_FIREBASE_MEASUREMENT_ID', 'G-TEST123');
