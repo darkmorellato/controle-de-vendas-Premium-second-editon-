@@ -1,6 +1,6 @@
 import Icons from '../Icons.jsx';
 
-export default function ClientDetailsModal({ isOpen, onClose, clientData, formatDateBR }) {
+export default function ClientDetailsModal({ isOpen, onClose, clientData }) {
     if (!isOpen || !clientData) return null;
 
     return (
