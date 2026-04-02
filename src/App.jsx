@@ -100,6 +100,14 @@ const App = () => {
     authState.saveSession();
   }, [authState.settings, authState.saveSession]);
 
+  // Auto-abrir alerta de aniversário ao logar
+  useEffect(() => {
+    if (authState.isLoggedIn && notifications.todayBirthdays.length > 0) {
+      const timer = setTimeout(() => openModal('birthdayAlert'), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [authState.isLoggedIn, notifications.todayBirthdays.length, openModal]);
+
   // Rotina diária (Firestore)
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
