@@ -1,10 +1,11 @@
 import Icons from '../../Icons.jsx';
 
-const MetricCards = ({ sales, clients, settings, formatCurrency }) => {
+const MetricCards = ({ sales, clients, settings, formatCurrency, performanceMonthFilter }) => {
     const mySales = sales.filter(s => s.employeeName === settings.employeeName);
     const today = new Date().toISOString().split('T')[0];
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const [yearStr, monthStr] = (performanceMonthFilter || '2026-04').split('-');
+    const currentMonth = parseInt(monthStr, 10) - 1;
+    const currentYear = parseInt(yearStr, 10);
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 

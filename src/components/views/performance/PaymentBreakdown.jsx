@@ -1,9 +1,10 @@
 import Icons from '../../Icons.jsx';
 
-const PaymentBreakdown = ({ sales, settings, formatCurrency }) => {
+const PaymentBreakdown = ({ sales, settings, formatCurrency, performanceMonthFilter }) => {
     const mySales = sales.filter(s => s.employeeName === settings.employeeName);
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const [yearStr, monthStr] = (performanceMonthFilter || '2026-04').split('-');
+    const currentMonth = parseInt(monthStr, 10) - 1;
+    const currentYear = parseInt(yearStr, 10);
 
     const paymentStats = {}; let totalPayments = 0;
     mySales.forEach(s => { const d = new Date(s.date + 'T00:00:00'); if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) { (s.payments || []).forEach(p => { if (p.amount > 0) { paymentStats[p.method] = (paymentStats[p.method] || 0) + p.amount; totalPayments += p.amount; } }); } });

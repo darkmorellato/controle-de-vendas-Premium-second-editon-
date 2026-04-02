@@ -1,10 +1,10 @@
 import Icons from '../../Icons.jsx';
 
-const DailyChart = ({ sales, settings, formatCurrency }) => {
+const DailyChart = ({ sales, settings, formatCurrency, performanceMonthFilter }) => {
     const mySales = sales.filter(s => s.employeeName === settings.employeeName);
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth();
+    const [yearStr, monthStr] = (performanceMonthFilter || '2026-04').split('-');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10) - 1;
     const days = new Date(year, month + 1, 0).getDate();
     const monthData = [];
 

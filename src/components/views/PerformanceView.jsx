@@ -132,19 +132,19 @@ const PerformanceView = ({
                     </div>
                 </div>
 
-                <GoalProgressCard sales={sales} settings={settings} formatCurrency={formatCurrency} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} />
+                <GoalProgressCard sales={sales} settings={settings} formatCurrency={formatCurrency} GOAL_SELLERS={GOAL_SELLERS} GOAL_MANAGER={GOAL_MANAGER} COMMISSION_PER_UNIT={COMMISSION_PER_UNIT} ELIGIBLE_FOR_GOAL={ELIGIBLE_FOR_GOAL} performanceMonthFilter={performanceMonthFilter} />
 
-                <MetricCards sales={sales} clients={clients} settings={settings} formatCurrency={formatCurrency} />
+                <MetricCards sales={sales} clients={clients} settings={settings} formatCurrency={formatCurrency} performanceMonthFilter={performanceMonthFilter} />
 
-                <DailyChart sales={sales} settings={settings} formatCurrency={formatCurrency} />
+                <DailyChart sales={sales} settings={settings} formatCurrency={formatCurrency} performanceMonthFilter={performanceMonthFilter} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <MonthlyChart formatCurrency={formatCurrency} monthlyChartData={monthlyChartData} />
                     <Last7DaysChart sales={sales} settings={settings} formatCurrency={formatCurrency} />
-                    <TopProducts sales={sales} settings={settings} />
+                    <TopProducts sales={sales} settings={settings} performanceMonthFilter={performanceMonthFilter} />
                 </div>
 
-                <PaymentBreakdown sales={sales} settings={settings} formatCurrency={formatCurrency} />
+                <PaymentBreakdown sales={sales} settings={settings} formatCurrency={formatCurrency} performanceMonthFilter={performanceMonthFilter} />
             </div>
         </div>
     );

@@ -2,11 +2,12 @@ import Icons from '../../Icons.jsx';
 
 const MANAGER_NAME = "Sabrina Almeida";
 
-const GoalProgressCard = ({ sales, settings, formatCurrency, GOAL_SELLERS, GOAL_MANAGER, COMMISSION_PER_UNIT, ELIGIBLE_FOR_GOAL }) => {
+const GoalProgressCard = ({ sales, settings, formatCurrency, GOAL_SELLERS, GOAL_MANAGER, COMMISSION_PER_UNIT, ELIGIBLE_FOR_GOAL, performanceMonthFilter }) => {
     const isManager = settings.employeeName === MANAGER_NAME;
     const myTarget = isManager ? GOAL_MANAGER : GOAL_SELLERS;
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const [yearStr, monthStr] = (performanceMonthFilter || '2026-04').split('-');
+    const currentMonth = parseInt(monthStr, 10) - 1;
+    const currentYear = parseInt(yearStr, 10);
     const relevantSales = sales.filter(s => {
         const d = new Date(s.date + 'T00:00:00');
         if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) return false;

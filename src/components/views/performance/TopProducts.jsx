@@ -1,9 +1,10 @@
 import Icons from '../../Icons.jsx';
 
-const TopProducts = ({ sales, settings }) => {
+const TopProducts = ({ sales, settings, performanceMonthFilter }) => {
     const mySales = sales.filter(s => s.employeeName === settings.employeeName);
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const [yearStr, monthStr] = (performanceMonthFilter || '2026-04').split('-');
+    const currentMonth = parseInt(monthStr, 10) - 1;
+    const currentYear = parseInt(yearStr, 10);
     const productCount = {};
     mySales.forEach(s => { const d = new Date(s.date + 'T00:00:00'); if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) { (s.items || []).forEach(i => { const key = i.description; productCount[key] = (productCount[key] || 0) + i.quantity; }); } });
     const sortedProducts = Object.entries(productCount).sort(([, a], [, b]) => b - a).slice(0, 5);
