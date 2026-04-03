@@ -247,7 +247,7 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR, monthFilter, setMo
                     return (
                         <>
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
-                                {kpis.map((k, idx) => (
+                                {kpis.map((k) => (
                                     <div key={k.label} className={`p-5 rounded-[2rem] border ${k.bg} hover:-translate-y-2 hover:shadow-xl ${k.glow} transition-all duration-300 group`} style={{  }}>
                                         <div className="flex items-center gap-2 mb-3">
                                             <div className={`p-2 rounded-xl ${k.bg}`}>
@@ -303,7 +303,7 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR, monthFilter, setMo
                                                 Faturamento por Fonte
                                             </h3>
                                             <div className="space-y-5">
-                                                {[...sources].sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 10).map(([src, data], idx) => (
+                                                {[...sources].sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 10).map(([src, data]) => (
                                                     <div key={src} className="group" style={{  }}>
                                                         <div className="flex justify-between items-center mb-1">
                                                             <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{src}</span>
@@ -341,7 +341,7 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR, monthFilter, setMo
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-amber-500/10">
-                                                    {[...salesWithSource].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map((s, idx) => {
+                                                    {[...salesWithSource].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map((s) => {
                                                         const raw = s.clientSource.trim();
                                                         const canon = srcToCanonical[raw] || raw;
                                                         const isMerged = raw.toLowerCase() !== canon.toLowerCase();

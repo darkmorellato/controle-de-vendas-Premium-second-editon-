@@ -6,7 +6,7 @@ function SalesList({
     filteredSales, groupedSales, groupBy, settings, filterDate, searchTerm,
     filterMode, setFilterMode, setFilterDate, setSearchTerm,
     handlePrevDate, handleNextDate, currentPage, setCurrentPage, totalPages,
-    openReceipt, startEdit, pendingEditItem, setPendingEditItem,
+    openReceipt, _startEdit, _pendingEditItem, setPendingEditItem,
     setPendingAuthAction, setManagerAuthModalOpen,
     formatCurrency, formatDateBR, printSalesList, getPaymentStyles,
     openClientDetails

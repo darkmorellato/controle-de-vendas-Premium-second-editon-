@@ -54,7 +54,7 @@ const migrateToV1 = (legacySnapshot) => {
     if (legacySettings?.employeeName) {
       store.settings = { ...store.settings, ...legacySettings };
     }
-  } catch {}
+  } catch { /* ignore legacy parse errors */ }
 
   // Coleta reminders legados
   try {
@@ -62,7 +62,7 @@ const migrateToV1 = (legacySnapshot) => {
       ? JSON.parse(legacySnapshot['miplace_reminders'])
       : [];
     if (Array.isArray(legacyReminders)) store.reminders = legacyReminders;
-  } catch {}
+  } catch { /* ignore legacy parse errors */ }
 
   // Coleta tema legado
   if (legacySnapshot['miplace_theme']) {

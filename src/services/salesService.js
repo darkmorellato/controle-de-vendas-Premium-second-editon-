@@ -44,7 +44,7 @@ export const salesService = {
   },
 
   async getById(saleId) {
-    const docRef = doc(db, 'vendas', saleId);
+    const _docRef = doc(db, 'vendas', saleId);
     const snapshot = await getDocs(query(collection(db, 'vendas'), where('__name__', '==', saleId)));
     if (snapshot.empty) return null;
     const d = snapshot.docs[0];

@@ -29,7 +29,6 @@ const NotificationsModalLazy = lazy(() => import('./components/modals/Notificati
 const CommissionModalLazy = lazy(() => import('./components/modals/CommissionModal.jsx'));
 const ConfirmClientUpdateModalLazy = lazy(() => import('./components/modals/ConfirmClientUpdateModal.jsx'));
 const ClientDetailsModalLazy = lazy(() => import('./components/modals/ClientDetailsModal.jsx'));
-import { db } from './firebase.js';
 import {
   SELLERS_LIST, EMPLOYEES_CREDENTIALS, ADM_NAME, ADM_HASH,
   CATEGORIES_LIST, PRODUCT_TYPES, RAM_STORAGE_OPTIONS, PAYMENT_METHODS,
@@ -92,10 +91,12 @@ const App = () => {
   // Efeitos de inicialização
   useEffect(() => {
     authState.loadSavedSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authState.loadSavedSession]);
 
   useEffect(() => {
     authState.saveSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authState.settings, authState.saveSession]);
 
   // Auto-abrir alerta de aniversário ao logar
@@ -146,6 +147,7 @@ const App = () => {
     if (!sales.some((s) => s.date === today)) {
       if (sortedSaleDates.length > 0) filters.setFilterDate(sortedSaleDates[sortedSaleDates.length - 1]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sales, sortedSaleDates, filters.setFilterDate]);
 
   // Alertas de rotina — gerenciados pelo hook useRoutineAlerts (routine)
@@ -153,7 +155,7 @@ const App = () => {
   // Handlers de cliente / formulário (vem do clientOps unificado)
 
   // Handlers de itens e pagamentos
-  const handleAddItem = useCallback(() => {
+  const _handleAddItem = useCallback(() => {
     if (!form.category) { showToast('Selecione a Categoria primeiro', 'error'); return; }
     if (!form.newItemType) { showToast('Selecione o Tipo do item', 'error'); return; }
     if (!form.newItemDesc || !form.newItemPrice) { showToast('Preencha Descrição e Preço', 'error'); return; }
@@ -189,7 +191,7 @@ const App = () => {
     form.setNewItemPrice(''); form.setNewItemDiscount(''); form.setNewItemDiscountPercent('');
   }, [form, sales, showToast]);
 
-  const handleAddPayment = useCallback(() => {
+  const _handleAddPayment = useCallback(() => {
     if (!form.currentPaymentMethod) { showToast('Selecione a Forma de pagamento', 'error'); return; }
     if (!form.currentPaymentAmount || parseCurrency(form.currentPaymentAmount) <= 0) {
       showToast('Preencha um valor válido', 'error'); return;
@@ -211,13 +213,13 @@ const App = () => {
     form.setCurrentPaymentAmount(''); form.setCurrentInstallments('');
   }, [form, showToast]);
 
-  const handleRemovePayment = useCallback(
+  const _handleRemovePayment = useCallback(
     (id) => form.setPaymentList(form.paymentList.filter((p) => p.id !== id)),
     [form],
   );
 
   // Handlers de formatação de preços
-  const handleItemPriceChange = useCallback((e) => {
+  const _handleItemPriceChange = useCallback((e) => {
     const val = e.target.value.replace(/\D/g, '');
     const floatVal = parseFloat(val) / 100 || 0;
     form.setNewItemPrice(formatCurrency(floatVal));
@@ -227,7 +229,7 @@ const App = () => {
     }
   }, [form]);
 
-  const handlePercentChange = useCallback((e) => {
+  const _handlePercentChange = useCallback((e) => {
     const val = e.target.value.replace(',', '.');
     form.setNewItemDiscountPercent(val);
     if (form.newItemPrice) {
@@ -237,7 +239,7 @@ const App = () => {
     }
   }, [form]);
 
-  const handleDiscountValChange = useCallback((e) => {
+  const _handleDiscountValChange = useCallback((e) => {
     const val = e.target.value.replace(/\D/g, '');
     const floatVal = parseFloat(val) / 100 || 0;
     form.setNewItemDiscount(formatCurrency(floatVal));
@@ -247,7 +249,7 @@ const App = () => {
     }
   }, [form]);
 
-  const handleCurrentPaymentAmountChange = useCallback((e) => {
+  const _handleCurrentPaymentAmountChange = useCallback((e) => {
     const val = e.target.value.replace(/\D/g, '');
     const floatVal = parseFloat(val) / 100 || 0;
     form.setCurrentPaymentAmount(formatCurrency(floatVal));
@@ -297,7 +299,7 @@ const App = () => {
         form.resetForm();
       })
       .catch((err) => showToast('Erro: ' + err.message, 'error'));
-  }, [form, authState.settings, showToast, handleSaveClient, openModal]);
+  }, [form, authState.settings, showToast, handleSaveClient, openModal, setCurrentReceipt]);
 
   const performDelete = useCallback(() => {
     if (form.editingId) {
@@ -340,7 +342,7 @@ const App = () => {
     } else {
       showToast('Senha incorreta', 'error');
     }
-  }, [managerPassword, pendingAuthAction, pendingEditItem, performSave, performDelete, form, closeModal, showToast]);
+  }, [managerPassword, pendingAuthAction, pendingEditItem, performSave, performDelete, form, closeModal, showToast, performClientUpdate, setManagerPassword, setPendingAuthAction, setPendingEditItem]);
 
   // Backup
   const handleExportBackup = useCallback(async () => {
@@ -361,17 +363,17 @@ const App = () => {
     setTimeout(() => showToast('Dados salvos na nuvem!'), 1000);
   }, [authState.settings, showToast]);
 
-  const handleImportBackup = useCallback(async (e) => {
+  const _handleImportBackup = useCallback(async (e) => {
     try {
       const result = await backupService.importFromFiles(e.target.files);
       if (result.success) { showToast(`${result.count} registros importados!`); closeModal('backup'); }
       else showToast('Nenhum dado válido encontrado.');
       if (fileInputInternalRef.current) fileInputInternalRef.current.value = '';
     } catch (error) { showToast('Erro: ' + error.message, 'error'); }
-  }, [showToast, closeModal]);
+  }, [showToast, closeModal, fileInputInternalRef]);
 
   // Impressão
-  const handleExportReceiptPDF = useCallback((mode) => {
+  const handleExportReceiptPDF = useCallback((_mode) => {
     const element = document.getElementById('receipt-paper');
     if (!element) { showToast('Recibo não encontrado', 'error'); return; }
     // Sanitize clientName to prevent XSS in print iframe
@@ -382,7 +384,7 @@ const App = () => {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;');
     const receiptHtml = element.outerHTML;
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo - ${safeClientName}</title><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0}html,body{background:#d0cdc8;display:flex;justify-content:center;padding:24px;font-family:'Plus Jakarta Sans',sans-serif}#receipt-paper{width:360px!important;overflow:hidden}img{max-width:100%}@media print{@page{size:80mm auto;margin:0}html,body{background:white;padding:0;display:block}#receipt-paper{width:80mm!important;border-radius:0!important}}</style></head><body>${receiptHtml}<script>document.fonts.ready.then(function(){setTimeout(function(){window.print()},800)})<\/script></body></html>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo - ${safeClientName}</title><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0}html,body{background:#d0cdc8;display:flex;justify-content:center;padding:24px;font-family:'Plus Jakarta Sans',sans-serif}#receipt-paper{width:360px!important;overflow:hidden}img{max-width:100%}@media print{@page{size:80mm auto;margin:0}html,body{background:white;padding:0;display:block}#receipt-paper{width:80mm!important;border-radius:0!important}}</style></head><body>${receiptHtml}<script>document.fonts.ready.then(function(){setTimeout(function(){window.print()},800)})</script></body></html>`;
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0;';
     document.body.appendChild(iframe);
@@ -448,7 +450,7 @@ const App = () => {
 
   const openReceipt = useCallback(
     (sale) => { setCurrentReceipt(sale); openModal('receipt'); },
-    [openModal],
+    [openModal, setCurrentReceipt],
   );
 
   // Dados derivados

@@ -39,7 +39,7 @@ export default function LoginScreen({
         setIsLoading(true);
         try {
             await performLogin();
-        } catch (error) {
+        } catch {
             setShake(true);
             setTimeout(() => setShake(false), 500);
         } finally {

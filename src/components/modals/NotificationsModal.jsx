@@ -20,7 +20,7 @@ export default function NotificationsModal({
     const currentMonth = todayData.month;
     const currentYear = todayData.year;
     const isManager = settings.employeeName === "Sabrina Almeida";
-    const myTarget = isManager ? GOAL_MANAGER : GOAL_SELLERS;
+    const _myTarget = isManager ? GOAL_MANAGER : GOAL_SELLERS;
     const monthNames = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
     const todayReminders = useMemo(() => {
@@ -227,7 +227,7 @@ export default function NotificationsModal({
                             <span className="ml-auto text-xs text-[#6b6560] bg-[#c9a227]/10 px-3 py-1 rounded-full">{monthNames[currentMonth]}</span>
                         </div>
                         <div className="space-y-4">
-                            {sellerGoals.map((seller, idx) => (
+                            {sellerGoals.map((seller) => (
                                 <div key={seller.fullName} className="p-5 bg-gradient-to-r from-[#fdfaf4] to-white rounded-2xl border border-[#c9a227]/20 hover:border-[#c9a227]/40 transition-all">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
@@ -283,7 +283,7 @@ export default function NotificationsModal({
                                 <span className="ml-auto bg-pink-100 text-pink-700 text-xs font-bold px-3 py-1 rounded-full">{monthBirthdays.length}</span>
                             </div>
                             <div className="space-y-3">
-                                {monthBirthdays.map((c, idx) => (
+                                {monthBirthdays.map((c) => (
                                     <div key={c.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:translate-x-1 ${c.isPast ? 'bg-gray-50 border-gray-200 opacity-60' : c.isToday ? 'bg-green-50 border-green-300' : 'bg-white border-pink-200/50 hover:border-pink-300'}`}>
                                         <div className="flex items-center gap-3">
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow ${c.isPast ? 'bg-gray-200 text-gray-500' : c.isToday ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white animate-pulse' : 'bg-gradient-to-br from-pink-300 to-pink-500 text-white'}`}>
@@ -339,7 +339,7 @@ export default function NotificationsModal({
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                {clientsSummary.recent.map((c, idx) => (
+                                {clientsSummary.recent.map((c) => (
                                     <div key={c.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-[#c9a227]/15 hover:border-[#c9a227]/30 transition-all hover:translate-x-1">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-gradient-to-br from-[#c9a227] to-[#f5e4ab] rounded-full flex items-center justify-center text-[#0f0f0f] font-bold text-sm shadow">
@@ -371,7 +371,7 @@ export default function NotificationsModal({
                                 <span className="ml-auto bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full animate-pulse">{todayReminders.length}</span>
                             </div>
                             <div className="space-y-3">
-                                {todayReminders.map((r, idx) => (
+                                {todayReminders.map((r) => (
                                     <div key={r.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-orange-200/50 hover:border-orange-300 transition-all">
                                         <div>
                                             <p className="font-bold text-[#0f0f0f] text-sm">{r.description}</p>

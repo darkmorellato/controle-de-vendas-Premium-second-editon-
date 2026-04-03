@@ -31,10 +31,10 @@ export default function Header({
     const [notificationsRead, setNotificationsRead] = useState(false);
 
     const {
-        todayReminders,
-        recentClients,
-        sellerGoalsAtRisk,
-        upcomingBirthdays,
+        todayReminders: _todayReminders,
+        recentClients: _recentClients,
+        sellerGoalsAtRisk: _sellerGoalsAtRisk,
+        upcomingBirthdays: _upcomingBirthdays,
         hasNotifications,
         totalNotifications
     } = useHeaderCalculations({

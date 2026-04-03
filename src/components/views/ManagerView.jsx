@@ -20,7 +20,7 @@ const ManagerView = ({
     formatCurrency, 
     SELLERS_LIST, 
     GOAL_SELLERS, 
-    GOAL_MANAGER, 
+    _GOAL_MANAGER, 
     COMMISSION_PER_UNIT,
     ELIGIBLE_FOR_GOAL,
     managerMonthFilter,
@@ -249,7 +249,7 @@ const ManagerView = ({
                             <div className="p-8 rounded-[2.5rem] border border-white/10 bg-white/5">
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-8">Aparelhos vs Meta ({GOAL_SELLERS} un) — {formatMonth(managerMonthFilter)}</p>
                                 <div className="space-y-5">
-                                    {sorted.map((d,idx)=>(
+                                    {sorted.map((d)=>(
                                         <div key={d.seller}>
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className={`font-bold text-sm ${d.color}`}>{d.seller.split(' ')[0]}</span>
@@ -268,7 +268,7 @@ const ManagerView = ({
                             <div className="p-8 rounded-[2.5rem] border border-white/10 bg-white/5">
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-8">Faturamento por Vendedora — {formatMonth(managerMonthFilter)}</p>
                                 <div className="h-48 flex items-end gap-8 justify-center px-4">
-                                    {sorted.map((d,i)=>{
+                                    {sorted.map((d)=>{
                                         const h = Math.max((d.rev/maxRev)*100,4);
                                         return (
                                             <div key={d.seller} className="flex flex-col items-center flex-1 group/bar h-full justify-end max-w-[200px] relative">

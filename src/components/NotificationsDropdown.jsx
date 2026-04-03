@@ -112,7 +112,7 @@ export default function NotificationsDropdown({ isOpen, onClose, onMarkAsRead, o
             });
         });
         return result;
-    }, [sales, currentMonth, currentYear, now]);
+    }, [sales, currentMonth, currentYear, GOAL_MANAGER, GOAL_SELLERS, ELIGIBLE_FOR_GOAL, today.date]);
 
     const totalNotifications = recentClients.length + sellerGoals.filter(g => g.needsAttention).length + upcomingBirthdays.filter(b => b.daysUntil <= 1).length + todayReminders.length;
 

@@ -42,7 +42,7 @@ export const db = {
   doc: (collectionName, id) => createMockCollection(collectionName).doc(id),
 };
 
-export const mockOnSnapshot = (docMock, callback, errorCallback) => {
+export const mockOnSnapshot = (docMock, callback, _errorCallback) => {
   callback({ exists: () => false, data: () => ({}) });
   return () => {};
 };

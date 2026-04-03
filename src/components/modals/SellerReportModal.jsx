@@ -143,7 +143,7 @@ export default function SellerReportModal({ isOpen, onClose, seller, sales, form
                                     <tbody className="divide-y divide-amber-500/10">
                                         {allItems.sort((a, b) => (b.date || '').localeCompare(a.date || '')).map((item, idx) => (
                                             <tr key={idx} className="hover:bg-amber-500/10 transition-all duration-300 group">
-                                                <td className="p-4 pl-6 text-amber-900/50 font-mono text-xs whitespace-nowrap">{item.date ? (() => { const [y, m, d] = item.date.split('-'); return `${d}/${m}`; })() : '-'}</td>
+                                                <td className="p-4 pl-6 text-amber-900/50 font-mono text-xs whitespace-nowrap">                                                {item.date ? (() => { const [_y, m, d] = item.date.split('-'); return `${d}/${m}`; })() : '-'}</td>
                                                 <td className="p-4 font-semibold text-amber-900 group-hover:text-amber-700 transition-colors">{item.description}</td>
                                                 <td className="p-4">
                                                     <span className="bg-amber-500/10 text-amber-700 border border-amber-500/20 px-2 py-1 rounded-full text-[10px] font-bold uppercase">{item.type}</span>

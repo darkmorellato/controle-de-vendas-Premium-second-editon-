@@ -25,7 +25,7 @@ vi.mock('../../firebase.js', () => ({
 }));
 
 const { clientService } = await import('../clientService.js');
-const { collection, doc, setDoc, updateDoc, onSnapshot } = await import('firebase/firestore');
+const { _collection, doc, setDoc, updateDoc, onSnapshot } = await import('firebase/firestore');
 
 describe('clientService', () => {
   beforeEach(() => {
