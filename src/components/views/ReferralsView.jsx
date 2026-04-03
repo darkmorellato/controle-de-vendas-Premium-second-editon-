@@ -167,11 +167,27 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR, monthFilter, setMo
                     const kwMap = {};
                     uniqueSrcs.forEach(s => { kwMap[s] = extractKw(s); });
 
+                    // --- Grupo forçado por aliases exatos (matching exato) ---
                     const FORCED_GROUPS = [
-                        { aliases: ['pri almeida', 'pri almeida sabrina', 'pri', 'pri almeida bianca', 'pri almeida e bianca', 'pri almeida/bianca', 'pri almeida / bianca', 'pri almeida /bianca', 'pri almeida /b'], canonical: 'Pri Almeida' },
+                        { aliases: ['pri almeida', 'pri almeida sabrina', 'pri almeida bianca', 'pri almeida e bianca', 'pri almeida/bianca', 'pri almeida / bianca', 'pri almeida /bianca', 'pri almeida /b'], canonical: 'Pri Almeida' },
                         { aliases: ['bianca', 'bibi', 'bia'], canonical: 'Bianca' },
                         { aliases: ['sabrina almeida', 'sabrina', 'sa'], canonical: 'Sabrina' },
                     ];
+
+                    // --- Palavras-chave por canonical (catch-all para variações não previstas) ---
+                    // Se QUALQUER keyword aparecer como palavra na string normalizada, mapeia para o canonical.
+                    // Ordem importa: regras mais específicas primeiro.
+                    const CANONICAL_KEYWORDS = [
+                        { canonical: 'Pri Almeida', keywords: ['pri', 'priscila', 'pris'] },
+                        { canonical: 'Bianca', keywords: ['bianca', 'bianka'] },
+                        { canonical: 'Sabrina', keywords: ['sabrina', 'sabri', 'brina'] },
+                    ];
+
+                    // Verifica se uma string normalizada contém alguma keyword como palavra completa
+                    const matchKeywords = (normalized, keywords) => {
+                        const words = normalized.split(' ');
+                        return keywords.find(kw => words.some(w => w === kw || w.startsWith(kw)));
+                    };
 
                     const parent = {};
                     uniqueSrcs.forEach(s => { parent[s] = s; });
@@ -180,6 +196,8 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR, monthFilter, setMo
 
                     const forcedMember = new Set();
                     const canonicalOverrides = {};
+
+                    // 1) Aplicar aliases exatos (FORCED_GROUPS)
                     FORCED_GROUPS.forEach(({ aliases, canonical }) => {
                         const matching = uniqueSrcs.filter(s => aliases.includes(normStr(s)));
                         matching.forEach(s => {
@@ -187,6 +205,29 @@ const ReferralsView = ({ sales, formatCurrency, formatDateBR, monthFilter, setMo
                             canonicalOverrides[s] = canonical;
                         });
                         for (let i = 1; i < matching.length; i++) unite(matching[0], matching[i]);
+                    });
+
+                    // 2) Aplicar keyword matching (CANONICAL_KEYWORDS) — captura variações não listadas nos aliases
+                    CANONICAL_KEYWORDS.forEach(({ canonical, keywords }) => {
+                        uniqueSrcs.forEach(s => {
+                            if (forcedMember.has(s)) return; // já resolvido por alias exato
+                            const normalized = normStr(s);
+                            const matched = matchKeywords(normalized, keywords);
+                            if (matched) {
+                                forcedMember.add(s);
+                                canonicalOverrides[s] = canonical;
+                            }
+                        });
+                    });
+
+                    // Unir todos os membros do mesmo canonical
+                    const canonicalMembers = {};
+                    Object.entries(canonicalOverrides).forEach(([s, canon]) => {
+                        if (!canonicalMembers[canon]) canonicalMembers[canon] = [];
+                        canonicalMembers[canon].push(s);
+                    });
+                    Object.values(canonicalMembers).forEach(members => {
+                        for (let i = 1; i < members.length; i++) unite(members[0], members[i]);
                     });
 
                     for (let i = 0; i < uniqueSrcs.length; i++) {
