@@ -38,9 +38,9 @@ import {
 } from './constants.js';
 import {
   formatCurrency, formatDateBR, maskPhone, maskDateStrict, maskIMEI,
-  parseCurrency, getPaymentStyles, verifyPassword,
+  getPaymentStyles, verifyPassword,
 } from './utils.js';
-import { salesService, authService, backupService } from './services/index.js';
+import { salesService, authService } from './services/index.js';
 
 // Contexts
 import { useSalesContext } from './contexts/SalesContext.jsx';
@@ -54,7 +54,7 @@ const App = () => {
   const { clients } = useClientContext();
   const ui = useUIContext();
   const { auth: authState, form, filters, notifications, handlers, appState, routine, clientOps } = app;
-  const { itemHandlers, paymentHandlers } = handlers;
+  const { itemHandlers, paymentHandlers, saleHandlers, printHandlers, backupHandlers } = handlers;
   const {
     currentView: currentViewState, setCurrentView: setCurrentViewState,
     isOnline, handleOnline, handleOffline,
@@ -152,110 +152,7 @@ const App = () => {
 
   // Alertas de rotina — gerenciados pelo hook useRoutineAlerts (routine)
 
-  // Handlers de cliente / formulário (vem do clientOps unificado)
-
-  // Handlers de itens e pagamentos
-  const _handleAddItem = useCallback(() => {
-    if (!form.category) { showToast('Selecione a Categoria primeiro', 'error'); return; }
-    if (!form.newItemType) { showToast('Selecione o Tipo do item', 'error'); return; }
-    if (!form.newItemDesc || !form.newItemPrice) { showToast('Preencha Descrição e Preço', 'error'); return; }
-    if (form.newItemImei?.trim()) {
-      const imeiClean = form.newItemImei.trim();
-      if (form.items.some((i) => i.imei?.trim() === imeiClean && i.id !== form.editingItemId)) {
-        showToast('IMEI já adicionado nesta venda!', 'error'); return;
-      }
-      if (sales.some((s) => {
-        if (form.editingId && s.id === form.editingId) return false;
-        return (s.items || []).some((i) => i.imei?.trim() === imeiClean);
-      })) { showToast('IMEI já registrado em outra venda!', 'error'); return; }
-    }
-    let finalPrice = parseCurrency(form.newItemPrice);
-    let finalDiscount = parseCurrency(form.newItemDiscount);
-    if (form.category === 'Devolução') {
-      finalPrice = -Math.abs(finalPrice); finalDiscount = -Math.abs(finalDiscount);
-    } else if (form.category === 'Troca') {
-      if (form.exchangeAction === 'in') { finalPrice = -Math.abs(finalPrice); finalDiscount = -Math.abs(finalDiscount); }
-      else { finalPrice = Math.abs(finalPrice); finalDiscount = Math.abs(finalDiscount); }
-    }
-    if (form.editingItemId) {
-      form.setItems((prev) => prev.map((i) => i.id === form.editingItemId
-        ? { ...i, quantity: form.newItemQty, type: form.newItemType || 'PRODUTO', description: form.newItemDesc, ram_storage: form.newItemRam, color: form.newItemColor, imei: form.newItemImei, financed: form.newItemFinanced, unitPrice: finalPrice, discount: finalDiscount }
-        : i));
-      form.setEditingItemId(null);
-      showToast('Item atualizado!');
-    } else {
-      form.setItems([...form.items, { id: Date.now(), sequence: form.items.length + 1, quantity: form.newItemQty, type: form.newItemType || 'PRODUTO', description: form.newItemDesc, ram_storage: form.newItemRam, color: form.newItemColor, imei: form.newItemImei, financed: form.newItemFinanced, unitPrice: finalPrice, discount: finalDiscount }]);
-    }
-    form.setNewItemQty(1); form.setNewItemType(''); form.setNewItemDesc(''); form.setNewItemRam('');
-    form.setNewItemColor(''); form.setNewItemImei(''); form.setNewItemFinanced('Não');
-    form.setNewItemPrice(''); form.setNewItemDiscount(''); form.setNewItemDiscountPercent('');
-  }, [form, sales, showToast]);
-
-  const _handleAddPayment = useCallback(() => {
-    if (!form.currentPaymentMethod) { showToast('Selecione a Forma de pagamento', 'error'); return; }
-    if (!form.currentPaymentAmount || parseCurrency(form.currentPaymentAmount) <= 0) {
-      showToast('Preencha um valor válido', 'error'); return;
-    }
-    let amountToAdd = parseCurrency(form.currentPaymentAmount);
-    if (['Devolução Dinheiro', 'Devolução Pix', 'Devolução Estorno Cartão'].includes(form.currentPaymentMethod)) {
-      amountToAdd = -Math.abs(amountToAdd);
-    }
-    if (form.editingPaymentId) {
-      form.setPaymentList((prev) => prev.map((p) => p.id === form.editingPaymentId
-        ? { ...p, method: form.currentPaymentMethod, type: form.currentPaymentType || 'Integral', amount: amountToAdd, installments: form.currentPaymentMethod === 'Credito Parcelado' ? form.currentInstallments : null }
-        : p));
-      form.setEditingPaymentId(null);
-      showToast('Pagamento atualizado!');
-    } else {
-      form.setPaymentList([...form.paymentList, { id: Date.now(), method: form.currentPaymentMethod, type: form.currentPaymentType || 'Integral', amount: amountToAdd, installments: form.currentPaymentMethod === 'Credito Parcelado' ? form.currentInstallments : null }]);
-    }
-    form.setCurrentPaymentMethod(''); form.setCurrentPaymentType('');
-    form.setCurrentPaymentAmount(''); form.setCurrentInstallments('');
-  }, [form, showToast]);
-
-  const _handleRemovePayment = useCallback(
-    (id) => form.setPaymentList(form.paymentList.filter((p) => p.id !== id)),
-    [form],
-  );
-
-  // Handlers de formatação de preços
-  const _handleItemPriceChange = useCallback((e) => {
-    const val = e.target.value.replace(/\D/g, '');
-    const floatVal = parseFloat(val) / 100 || 0;
-    form.setNewItemPrice(formatCurrency(floatVal));
-    if (form.newItemDiscountPercent) {
-      const pct = parseFloat(form.newItemDiscountPercent.replace(',', '.')) || 0;
-      form.setNewItemDiscount(formatCurrency((floatVal * form.newItemQty) * (pct / 100)));
-    }
-  }, [form]);
-
-  const _handlePercentChange = useCallback((e) => {
-    const val = e.target.value.replace(',', '.');
-    form.setNewItemDiscountPercent(val);
-    if (form.newItemPrice) {
-      const price = parseCurrency(form.newItemPrice);
-      const pct = parseFloat(val) || 0;
-      form.setNewItemDiscount(formatCurrency((price * form.newItemQty) * (pct / 100)));
-    }
-  }, [form]);
-
-  const _handleDiscountValChange = useCallback((e) => {
-    const val = e.target.value.replace(/\D/g, '');
-    const floatVal = parseFloat(val) / 100 || 0;
-    form.setNewItemDiscount(formatCurrency(floatVal));
-    if (form.newItemPrice) {
-      const price = parseCurrency(form.newItemPrice) * form.newItemQty;
-      if (price > 0) form.setNewItemDiscountPercent(((floatVal / price) * 100).toFixed(2).replace('.', ','));
-    }
-  }, [form]);
-
-  const _handleCurrentPaymentAmountChange = useCallback((e) => {
-    const val = e.target.value.replace(/\D/g, '');
-    const floatVal = parseFloat(val) / 100 || 0;
-    form.setCurrentPaymentAmount(formatCurrency(floatVal));
-  }, [form]);
-
-  // Salvar/excluir venda
+  // Salvar/excluir venda — KEPT: App.jsx version has contract PDF upload logic not in hooks
   const performSave = useCallback(async () => {
     const clientId = form.clientName ? handleSaveClient() : null;
 
@@ -301,14 +198,6 @@ const App = () => {
       .catch((err) => showToast('Erro: ' + err.message, 'error'));
   }, [form, authState.settings, showToast, handleSaveClient, openModal, setCurrentReceipt]);
 
-  const performDelete = useCallback(() => {
-    if (form.editingId) {
-      salesService.delete(form.editingId)
-        .then(() => { showToast('Excluído!', 'error'); form.resetForm(); })
-        .catch((err) => showToast('Erro: ' + err.message, 'error'));
-    }
-  }, [form, showToast]);
-
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
     if (form.items.length === 0) { showToast('Adicione itens!', 'error'); return; }
@@ -335,97 +224,14 @@ const App = () => {
     if (isValid) {
       if (pendingAuthAction === 'save') performSave();
       if (pendingAuthAction === 'edit' && pendingEditItem) form.startEdit(pendingEditItem);
-      if (pendingAuthAction === 'delete') performDelete();
+      if (pendingAuthAction === 'delete') saleHandlers.performDelete();
       if (pendingAuthAction === 'update_client') performClientUpdate();
       closeModal('managerAuth');
       setManagerPassword(''); setPendingAuthAction(null); setPendingEditItem(null);
     } else {
       showToast('Senha incorreta', 'error');
     }
-  }, [managerPassword, pendingAuthAction, pendingEditItem, performSave, performDelete, form, closeModal, showToast, performClientUpdate, setManagerPassword, setPendingAuthAction, setPendingEditItem]);
-
-  // Backup
-  const handleExportBackup = useCallback(async () => {
-    try {
-      const result = await backupService.exportToFile(sales, clients, authState.settings);
-      if (result.success) showToast('Backup salvo!');
-      if (result.aborted) return;
-      if (modals.logout?.open) closeModal('logout');
-    } catch (err) {
-      showToast('Erro ao exportar backup: ' + err.message, 'error');
-    }
-  }, [sales, clients, authState.settings, modals.logout, closeModal, showToast]);
-
-  const handleSaveToCloud = useCallback(async () => {
-    if (!authService.currentUser) { showToast('Erro: Não conectado.', 'error'); return; }
-    showToast('Verificando sincronização...', 'info');
-    await authService.logAction('manual_cloud_save', authState.settings.employeeName);
-    setTimeout(() => showToast('Dados salvos na nuvem!'), 1000);
-  }, [authState.settings, showToast]);
-
-  const _handleImportBackup = useCallback(async (e) => {
-    try {
-      const result = await backupService.importFromFiles(e.target.files);
-      if (result.success) { showToast(`${result.count} registros importados!`); closeModal('backup'); }
-      else showToast('Nenhum dado válido encontrado.');
-      if (fileInputInternalRef.current) fileInputInternalRef.current.value = '';
-    } catch (error) { showToast('Erro: ' + error.message, 'error'); }
-  }, [showToast, closeModal, fileInputInternalRef]);
-
-  // Impressão
-  const handleExportReceiptPDF = useCallback((_mode) => {
-    const element = document.getElementById('receipt-paper');
-    if (!element) { showToast('Recibo não encontrado', 'error'); return; }
-    // Sanitize clientName to prevent XSS in print iframe
-    const safeClientName = (currentReceipt?.clientName || 'Venda')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;');
-    const receiptHtml = element.outerHTML;
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo - ${safeClientName}</title><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0}html,body{background:#d0cdc8;display:flex;justify-content:center;padding:24px;font-family:'Plus Jakarta Sans',sans-serif}#receipt-paper{width:360px!important;overflow:hidden}img{max-width:100%}@media print{@page{size:80mm auto;margin:0}html,body{background:white;padding:0;display:block}#receipt-paper{width:80mm!important;border-radius:0!important}}</style></head><body>${receiptHtml}<script>document.fonts.ready.then(function(){setTimeout(function(){window.print()},800)})</script></body></html>`;
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0;';
-    document.body.appendChild(iframe);
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    iframeDoc.open(); iframeDoc.write(html); iframeDoc.close();
-    iframe.contentWindow.focus();
-    setTimeout(() => {
-      try { iframe.contentWindow.print(); showToast('Dialogo de impressao aberto!'); }
-      catch (e) { showToast('Erro: ' + e.message, 'error'); }
-      setTimeout(() => document.body.removeChild(iframe), 60_000);
-    }, 1000);
-  }, [currentReceipt, showToast]);
-
-  const printSalesList = useCallback(() => {
-    filters.setItemsPerPage(10_000);
-    setTimeout(() => {
-      const source = document.querySelector('.print-sales-area');
-      if (!source) { showToast('Nenhum dado para imprimir', 'error'); filters.setItemsPerPage(50); return; }
-      const clone = source.cloneNode(true);
-      clone.querySelectorAll('.no-print').forEach((el) => el.remove());
-
-      const totalValue = filters.filteredSales.reduce((s, i) => s + (i.amountPaid || i.amount), 0);
-      const ph = clone.querySelector('.print-header');
-      if (ph) {
-        ph.textContent = '';
-        Object.assign(ph.style, { display:'block', textAlign:'center', marginBottom:'10px', paddingBottom:'8px', borderBottom:'2px solid #000', fontFamily:'Arial,sans-serif' });
-        const div = document.createElement('div');
-        Object.assign(div.style, { fontSize:'12px', fontWeight:'bold', color:'#000', marginTop:'5px', letterSpacing:'1px' });
-        div.textContent = `TOTAL LISTADO: R$ ${formatCurrency(totalValue)}`;
-        ph.appendChild(div);
-      }
-
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
-      document.body.appendChild(iframe);
-      const win = iframe.contentWindow;
-      win.document.write(`<html><head><title>Relatorio de Vendas</title><style>@page{margin:10mm;size:A4 portrait}body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#000;background:#fff;line-height:1.3}*{color:#000!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;border-color:#000!important;border-radius:0!important}table{border-collapse:collapse;width:100%;table-layout:fixed;margin-bottom:20px}table tr{page-break-inside:avoid;border-bottom:1px solid #ddd}table th,table td{padding:8px 4px;text-align:left;vertical-align:top;word-wrap:break-word}table th{font-weight:bold;border-bottom:2px solid #000;font-size:9pt;text-transform:uppercase;color:#333!important}.flex{display:flex;align-items:center;justify-content:space-between;border-left:3px solid #000;padding-left:8px;margin-bottom:8px;margin-top:15px;background:#f9f9f9!important;padding:4px 8px}table th:nth-child(1),table td:nth-child(1){width:18%}table th:nth-child(2),table td:nth-child(2){width:38%}table th:nth-child(3),table td:nth-child(3){width:10%;text-align:center}table th:nth-child(4),table td:nth-child(4){width:20%}table th:nth-child(5),table td:nth-child(5){width:14%;text-align:right}table td:nth-child(5) div:first-child{font-weight:bold;font-size:11pt}b,strong{font-weight:bold}h3{margin:0;font-size:11pt;font-weight:bold;text-transform:uppercase}.space-y-10>div{margin-bottom:20px}.print-header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:15px}p{margin:3px 0}svg{display:none!important}*{font-size:10pt!important;line-height:1.3!important}h3,h3*{font-size:11pt!important}table th,table th*{font-size:9pt!important}table td:nth-child(5) div:first-child,table td:nth-child(5) div:first-child*{font-size:11pt!important}td div.flex{display:block!important;border:none!important;padding:0!important;margin:0!important;background:transparent!important}td .flex-1,td .text-right,td .flex-shrink-0{display:block!important;text-align:left!important;width:100%!important;margin-top:2px!important}td .text-right{margin-top:4px!important;margin-bottom:2px!important;font-weight:bold}td .space-y-2>div{display:block!important;padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed #ccc;width:100%;clear:both}td .space-y-2>div:last-child{border-bottom:none}td .flex-wrap{display:block!important;margin-top:4px!important}td .flex-wrap span{display:inline-block!important;padding-right:8px!important}td:nth-child(4) div{display:block!important;margin-bottom:3px!important}</style></head><body>${clone.outerHTML}</body></html>`);
-      win.document.close(); win.focus();
-      setTimeout(() => { win.print(); document.body.removeChild(iframe); filters.setItemsPerPage(50); }, 350);
-    }, 250);
-  }, [filters, showToast]);
+  }, [managerPassword, pendingAuthAction, pendingEditItem, performSave, saleHandlers, form, closeModal, showToast, performClientUpdate, setManagerPassword, setPendingAuthAction, setPendingEditItem]);
 
   // Histórico e dados do cliente — delegados ao clientOps
   // handleViewHistory, handleOpenClientData, handleClientDataChange vêm de clientOps
@@ -447,11 +253,6 @@ const App = () => {
     setClientDetailsData(clientData);
     openModal('clientDetails');
   }, [openModal]);
-
-  const openReceipt = useCallback(
-    (sale) => { setCurrentReceipt(sale); openModal('receipt'); },
-    [openModal, setCurrentReceipt],
-  );
 
   // Dados derivados
   const availableMonths = useMemo(() => {
@@ -623,12 +424,12 @@ const App = () => {
             setFilterMode={filters.setFilterMode} setFilterDate={filters.setFilterDate} setSearchTerm={filters.setSearchTerm}
             handlePrevDate={filters.handlePrevDate} handleNextDate={filters.handleNextDate}
             currentPage={filters.currentPage} setCurrentPage={filters.setCurrentPage} totalPages={filters.totalPages}
-            openReceipt={openReceipt}
+            openReceipt={printHandlers.openReceipt}
             startEdit={(sale) => { setPendingEditItem(sale); setPendingAuthAction('edit'); openModal('managerAuth'); }}
             pendingEditItem={pendingEditItem} setPendingEditItem={setPendingEditItem}
             setPendingAuthAction={setPendingAuthAction} setManagerAuthModalOpen={() => openModal('managerAuth')}
             formatCurrency={formatCurrency} formatDateBR={formatDateBR}
-            printSalesList={printSalesList} getPaymentStyles={getPaymentStyles}
+            printSalesList={printHandlers.printSalesList} getPaymentStyles={getPaymentStyles}
             openClientDetails={openClientDetails}
           />
         </Suspense>
@@ -648,13 +449,13 @@ const App = () => {
 
       {/* Modais */}
       <Suspense fallback={null}>
-        <ReceiptModalLazy isOpen={modals.receipt?.open} onClose={() => closeModal('receipt')} receipt={currentReceipt} onPrint={handleExportReceiptPDF} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
+        <ReceiptModalLazy isOpen={modals.receipt?.open} onClose={() => closeModal('receipt')} receipt={currentReceipt} onPrint={printHandlers.handleExportReceiptPDF} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
       </Suspense>
       <Suspense fallback={null}>
-        <BackupModalLazy isOpen={modals.backup?.open} onClose={() => closeModal('backup')} onExport={handleExportBackup} onSaveToCloud={handleSaveToCloud} fileInputRef={fileInputInternalRef} />
+        <BackupModalLazy isOpen={modals.backup?.open} onClose={() => closeModal('backup')} onExport={backupHandlers.handleExportBackup} onSaveToCloud={backupHandlers.handleSaveToCloud} fileInputRef={fileInputInternalRef} />
       </Suspense>
       <Suspense fallback={null}>
-        <LogoutModalLazy isOpen={modals.logout?.open} onClose={() => closeModal('logout')} onExportBackup={handleExportBackup} onSaveToCloud={handleSaveToCloud} onLogout={() => { authState.logout(); closeModal('logout'); }} />
+        <LogoutModalLazy isOpen={modals.logout?.open} onClose={() => closeModal('logout')} onExportBackup={backupHandlers.handleExportBackup} onSaveToCloud={backupHandlers.handleSaveToCloud} onLogout={() => { authState.logout(); closeModal('logout'); }} />
       </Suspense>
       <Suspense fallback={null}>
         <ConfirmSaleModalLazy isOpen={modals.confirmSale?.open} onClose={() => closeModal('confirmSale')} onConfirm={() => { closeModal('confirmSale'); performSave(); }} />
@@ -669,7 +470,7 @@ const App = () => {
         <ClientSearchModalLazy isOpen={modals.clientSearch?.open} onClose={() => closeModal('clientSearch')} searchTerm={clientSearchTerm} setSearchTerm={setClientSearchTerm} filteredClients={filteredClients} onSelectClient={(c) => { form.fillClientData(c); closeModal('clientSearch'); }} />
       </Suspense>
       <Suspense fallback={null}>
-        <ClientHistoryModalLazy isOpen={modals.clientHistory?.open} onClose={() => closeModal('clientHistory')} selectedClientHistory={selectedClientHistory} openReceipt={openReceipt} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
+        <ClientHistoryModalLazy isOpen={modals.clientHistory?.open} onClose={() => closeModal('clientHistory')} selectedClientHistory={selectedClientHistory} openReceipt={printHandlers.openReceipt} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
       </Suspense>
       <Suspense fallback={null}>
         <BirthdayAlertModalLazy isOpen={notifications.todayBirthdays.length > 0 && modals.birthdayAlert?.open} onClose={() => closeModal('birthdayAlert')} todayBirthdays={notifications.todayBirthdays} />

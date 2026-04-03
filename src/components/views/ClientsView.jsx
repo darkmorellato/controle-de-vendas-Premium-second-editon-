@@ -1,6 +1,7 @@
 import Icons from '../Icons.jsx';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import Portal from '../Portal.jsx';
+import MonthFilterDropdown from '../MonthFilterDropdown.jsx';
 
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -30,11 +31,8 @@ const ClientsView = ({
     setCurrentView
 }) => {
     const [isSellerFilterOpen, setIsSellerFilterOpen] = useState(false);
-    const [isMonthFilterOpen, setIsMonthFilterOpen] = useState(false);
     const sellerFilterBtnRef = useRef(null);
-    const monthFilterBtnRef = useRef(null);
     const [sellerFilterPos, setSellerFilterPos] = useState({ right: 0, top: 0 });
-    const [monthFilterPos, setMonthFilterPos] = useState({ right: 0, top: 0 });
 
     useEffect(() => {
         if (isSellerFilterOpen && sellerFilterBtnRef.current) {
@@ -44,35 +42,20 @@ const ClientsView = ({
     }, [isSellerFilterOpen]);
 
     useEffect(() => {
-        if (isMonthFilterOpen && monthFilterBtnRef.current) {
-            const rect = monthFilterBtnRef.current.getBoundingClientRect();
-            setMonthFilterPos({ right: window.innerWidth - rect.right, top: rect.bottom + 8 });
-        }
-    }, [isMonthFilterOpen]);
-
-    useEffect(() => {
         const handleClickOutside = (e) => {
             if (isSellerFilterOpen && sellerFilterBtnRef.current && !sellerFilterBtnRef.current.contains(e.target) && !e.target.closest('.seller-filter-dropdown')) {
                 setIsSellerFilterOpen(false);
             }
-            if (isMonthFilterOpen && monthFilterBtnRef.current && !monthFilterBtnRef.current.contains(e.target) && !e.target.closest('.month-filter-dropdown')) {
-                setIsMonthFilterOpen(false);
-            }
         };
-        if (isSellerFilterOpen || isMonthFilterOpen) {
+        if (isSellerFilterOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isSellerFilterOpen, isMonthFilterOpen]);
+    }, [isSellerFilterOpen]);
 
     const handleSelectSeller = (seller) => {
         setSellerFilter(seller);
         setIsSellerFilterOpen(false);
-    };
-
-    const handleSelectMonth = (month) => {
-        setMonthFilter(month);
-        setIsMonthFilterOpen(false);
     };
 
     return (
@@ -103,7 +86,7 @@ const ClientsView = ({
                         <button 
                             ref={sellerFilterBtnRef}
                             type="button"
-                            onClick={() => { setIsSellerFilterOpen(!isSellerFilterOpen); setIsMonthFilterOpen(false); }}
+                            onClick={() => { setIsSellerFilterOpen(!isSellerFilterOpen); }}
                             className={`p-4 rounded-[1.5rem] border transition-all duration-300 ${
                                 sellerFilter !== 'todos' 
                                     ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-lg shadow-amber-500/20' 
@@ -173,77 +156,13 @@ const ClientsView = ({
                             </Portal>
                         )}
                     </div>
-                    {/* Filtro por Mês */}
-                    <div className="relative">
-                        <button 
-                            ref={monthFilterBtnRef}
-                            type="button"
-                            onClick={() => { setIsMonthFilterOpen(!isMonthFilterOpen); setIsSellerFilterOpen(false); }}
-                            className={`p-4 rounded-[1.5rem] border transition-all duration-300 ${
-                                monthFilter !== 'todos' 
-                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-lg shadow-amber-500/20' 
-                                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-amber-500/30 hover:text-amber-400'
-                            }`}
-                            title={monthFilter !== 'todos' ? `Filtrando: ${formatMonth(monthFilter)}` : 'Filtrar por mês'}
-                        >
-                            <Icons.Calendar className="w-5 h-5" />
-                        </button>
-
-                        {isMonthFilterOpen && (
-                            <Portal>
-                                <div 
-                                    className="fixed w-80 bg-[#fdfaf4] border-2 border-[#c9a227]/50 rounded-2xl shadow-2xl overflow-hidden z-[9999] month-filter-dropdown"
-                                    style={{ 
-                                        right: monthFilterPos.right,
-                                        top: monthFilterPos.top,
-                                        boxShadow: '0 10px 40px rgba(201,162,39,0.35), 0 0 60px rgba(201,162,39,0.15)'
-                                    }}
-                                >
-                                    <div className="p-5 border-b border-[#c9a227]/40 bg-gradient-to-r from-[#c9a227]/20 via-[#c9a227]/10 to-transparent">
-                                        <h3 className="font-bold text-[#0f0f0f] text-lg flex items-center gap-2 tracking-wide">
-                                            <Icons.Calendar className="w-5 h-5 text-[#c9a227]" />
-                                            Filtrar por Mês
-                                        </h3>
-                                    </div>
-                                    <div className="py-3 px-2 max-h-80 overflow-y-auto">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSelectMonth('todos')}
-                                            className={`w-full px-4 py-4 mx-2 my-1 rounded-xl transition-all hover:bg-[#c9a227]/20 border border-transparent hover:border-[#c9a227]/40 ${
-                                                monthFilter === 'todos' ? 'bg-[#c9a227]/20 border-[#c9a227]/40' : ''
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2.5 bg-[#c9a227]/20 rounded-lg border border-[#c9a227]/40">
-                                                    <Icons.Calendar className="w-5 h-5 text-[#8b6914]" />
-                                                </div>
-                                                <span className={`text-base font-medium ${monthFilter === 'todos' ? 'text-[#c9a227]' : 'text-[#0f0f0f]'}`}>Todos os Meses</span>
-                                            </div>
-                                        </button>
-                                        {availableMonths.map(month => (
-                                            <button
-                                                key={month}
-                                                type="button"
-                                                onClick={() => handleSelectMonth(month)}
-                                                className={`w-full px-4 py-4 mx-2 my-1 rounded-xl transition-all hover:bg-[#c9a227]/20 border border-transparent hover:border-[#c9a227]/40 ${
-                                                    monthFilter === month ? 'bg-[#c9a227]/20 border-[#c9a227]/40' : ''
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2.5 bg-[#c9a227]/20 rounded-lg border border-[#c9a227]/40">
-                                                        <span className="text-sm font-bold text-[#8b6914]">
-                                                            {month.split('-')[1]}/{month.split('-')[0].slice(-2)}
-                                                        </span>
-                                                    </div>
-                                                    <span className={`text-base font-medium ${monthFilter === month ? 'text-[#c9a227]' : 'text-[#0f0f0f]'}`}>{formatMonth(month)}</span>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </Portal>
-                        )}
-                    </div>
+                    <MonthFilterDropdown
+                        monthFilter={monthFilter}
+                        setMonthFilter={(m) => { setMonthFilter(m); setIsSellerFilterOpen(false); }}
+                        availableMonths={availableMonths}
+                        formatMonth={formatMonth}
+                        dropdownClassName="month-filter-dropdown"
+                    />
                 </div>
             </div>
             <div className="overflow-x-auto">
@@ -349,4 +268,4 @@ const ClientsView = ({
     );
 };
 
-export default ClientsView;
+export default memo(ClientsView);

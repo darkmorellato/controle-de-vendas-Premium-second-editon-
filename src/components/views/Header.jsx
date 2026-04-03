@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import Icons from '../Icons.jsx';
 import { HeaderClock } from '../Clock.jsx';
 import NotificationsDropdown from '../NotificationsDropdown.jsx';
 import { useHeaderCalculations } from '../../hooks/ui/useHeaderCalculations.ts';
 
-export default function Header({
+export default memo(function Header({
     settings,
     isAdm,
     isOnline,
@@ -247,4 +247,4 @@ export default function Header({
             </div>
         </div>
     );
-}
+});

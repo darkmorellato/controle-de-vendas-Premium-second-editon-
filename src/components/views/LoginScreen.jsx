@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import Icons from '../Icons.jsx';
 
-export default function LoginScreen({
+export default memo(function LoginScreen({
     toasts,
     setToasts,
     SELLERS_LIST,
@@ -273,7 +273,7 @@ export default function LoginScreen({
             </div>
         </div>
     );
-}
+});
 
 function ToastContainer({ toasts, removeToast }) {
     return (

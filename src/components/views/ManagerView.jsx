@@ -1,7 +1,8 @@
 import Icons from '../Icons.jsx';
-import { useState, useRef, useEffect } from 'react';
-import Portal from '../Portal.jsx';
+import { useState, memo } from 'react';
+import MonthFilterDropdown from '../MonthFilterDropdown.jsx';
 import SellerReportModal from '../modals/SellerReportModal.jsx';
+import { countUnits } from '../../utils.js';
 
 const MONTH_NAMES = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -27,35 +28,8 @@ const ManagerView = ({
     setManagerMonthFilter,
     managerAvailableMonths
 }) => {
-    const [isMonthFilterOpen, setIsMonthFilterOpen] = useState(false);
-    const monthFilterBtnRef = useRef(null);
-    const [monthFilterPos, setMonthFilterPos] = useState({ right: 0, top: 0 });
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [selectedSellerForReport, setSelectedSellerForReport] = useState(null);
-
-    useEffect(() => {
-        if (isMonthFilterOpen && monthFilterBtnRef.current) {
-            const rect = monthFilterBtnRef.current.getBoundingClientRect();
-            setMonthFilterPos({ right: window.innerWidth - rect.right, top: rect.bottom + 8 });
-        }
-    }, [isMonthFilterOpen]);
-
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (isMonthFilterOpen && monthFilterBtnRef.current && !monthFilterBtnRef.current.contains(e.target) && !e.target.closest('.manager-month-filter-dropdown')) {
-                setIsMonthFilterOpen(false);
-            }
-        };
-        if (isMonthFilterOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isMonthFilterOpen]);
-
-    const handleSelectMonth = (month) => {
-        setManagerMonthFilter(month);
-        setIsMonthFilterOpen(false);
-    };
 
     const openSellerReport = (seller) => {
         setSelectedSellerForReport(seller);
@@ -75,61 +49,18 @@ const ManagerView = ({
                         Painel Gerencial
                     </h2>
                     <div className="flex items-center gap-3">
-                        {/* Filtro por Mês */}
-                        <div className="relative">
-                            <button 
-                                ref={monthFilterBtnRef}
-                                type="button"
-                                onClick={() => setIsMonthFilterOpen(!isMonthFilterOpen)}
-                                className="p-3 rounded-[1.5rem] border bg-amber-500/20 border-amber-500/40 text-amber-400 transition-all duration-300 flex items-center gap-2"
-                                title="Filtrar por mês"
-                            >
-                                <Icons.Calendar className="w-4 h-4" />
-                                <span className="text-xs font-bold">{formatMonth(managerMonthFilter)}</span>
-                                <Icons.ChevronRight className={`w-3 h-3 transition-transform ${isMonthFilterOpen ? 'rotate-90' : ''}`} />
-                            </button>
-
-                            {isMonthFilterOpen && (
-                                <Portal>
-                                    <div 
-                                        className="fixed w-72 bg-[#fdfaf4] border-2 border-[#c9a227]/50 rounded-2xl shadow-2xl overflow-hidden z-[9999] manager-month-filter-dropdown"
-                                        style={{ 
-                                            right: monthFilterPos.right,
-                                            top: monthFilterPos.top,
-                                            boxShadow: '0 10px 40px rgba(201,162,39,0.35), 0 0 60px rgba(201,162,39,0.15)'
-                                        }}
-                                    >
-                                        <div className="p-4 border-b border-[#c9a227]/40 bg-gradient-to-r from-[#c9a227]/20 via-[#c9a227]/10 to-transparent">
-                                            <h3 className="font-bold text-[#0f0f0f] flex items-center gap-2 tracking-wide">
-                                                <Icons.Calendar className="w-4 h-4 text-[#c9a227]" />
-                                                Selecionar Mês
-                                            </h3>
-                                        </div>
-                                        <div className="py-2 px-2">
-                                            {managerAvailableMonths.map(month => (
-                                                <button
-                                                    key={month}
-                                                    type="button"
-                                                    onClick={() => handleSelectMonth(month)}
-                                                    className={`w-full px-4 py-3 mx-2 my-1 rounded-xl transition-all hover:bg-[#c9a227]/20 border border-transparent hover:border-[#c9a227]/40 ${
-                                                        managerMonthFilter === month ? 'bg-[#c9a227]/20 border-[#c9a227]/40' : ''
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-[#c9a227]/20 rounded-lg border border-[#c9a227]/40">
-                                                            <span className="text-xs font-bold text-[#8b6914]">
-                                                                {month.split('-')[1]}/{month.split('-')[0].slice(-2)}
-                                                            </span>
-                                                        </div>
-                                                        <span className={`text-sm font-medium ${managerMonthFilter === month ? 'text-[#c9a227]' : 'text-[#0f0f0f]'}`}>{formatMonth(month)}</span>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </Portal>
-                            )}
-                        </div>
+                        <MonthFilterDropdown
+                            monthFilter={managerMonthFilter}
+                            setMonthFilter={setManagerMonthFilter}
+                            availableMonths={managerAvailableMonths}
+                            formatMonth={formatMonth}
+                            dropdownClassName="manager-month-filter-dropdown"
+                            dropdownTitle="Selecionar Mês"
+                            dropdownWidth="w-72"
+                            showButtonText
+                            showTodosOption={false}
+                            buttonPadding="p-3"
+                        />
                         <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-full">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_6px_#10b981] animate-pulse"></div>
                             <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Tempo Real</span>
@@ -143,11 +74,7 @@ const ManagerView = ({
                     const monthRev = mSales.reduce((a,s)=>a+(s.amountPaid||s.amount||0),0);
                     const cnt = mSales.filter(s=>(s.amountPaid||s.amount||0)>0).length;
                     const avgT = cnt > 0 ? monthRev/cnt : 0;
-                    const units = mSales.reduce((acc,s)=>{
-                        const pos=(s.items||[]).filter(i=>ELIGIBLE_FOR_GOAL.includes(i.type)&&i.unitPrice>0);
-                        const neg=(s.items||[]).filter(i=>ELIGIBLE_FOR_GOAL.includes(i.type)&&i.unitPrice<0);
-                        return acc+pos.reduce((sum,i)=>sum+i.quantity,0)-neg.reduce((sum,i)=>sum+Math.abs(i.quantity),0);
-                    },0);
+                    const units = countUnits(mSales, ELIGIBLE_FOR_GOAL);
                     const kpis = [
                         { label:'Faturamento Hoje', val:`R$ ${formatCurrency(todayRev)}`, color:'text-emerald-400', bg:'bg-emerald-500/10 border-emerald-500/20' },
                         { label:'Faturamento Mês',  val:`R$ ${formatCurrency(monthRev)}`, color:'text-odoo-400',    bg:'bg-odoo-500/10 border-odoo-500/20' },
@@ -167,11 +94,7 @@ const ManagerView = ({
                     );
                 })()}
                 {(() => {
-                    const countU = (arr) => arr.reduce((acc,s)=>{
-                        const pos=(s.items||[]).filter(i=>ELIGIBLE_FOR_GOAL.includes(i.type)&&i.unitPrice>0);
-                        const neg=(s.items||[]).filter(i=>ELIGIBLE_FOR_GOAL.includes(i.type)&&i.unitPrice<0);
-                        return acc+pos.reduce((sum,i)=>sum+i.quantity,0)-neg.reduce((sum,i)=>sum+Math.abs(i.quantity),0);
-                    },0);
+                    const countU = (arr) => countUnits(arr, ELIGIBLE_FOR_GOAL);
                     const COLORS = ['text-[#f8bbd0]','text-[#6EA8FE]'];
                     const RINGS  = ['ring-[#f8bbd0]/20','ring-[#6EA8FE]/20'];
                     const BAR_CLS = ['bg-gradient-to-r from-[#f8bbd0] to-[#f48fb1]','bg-gradient-to-r from-[#6EA8FE] to-[#4285F4]'];
@@ -300,4 +223,4 @@ const ManagerView = ({
     );
 };
 
-export default ManagerView;
+export default memo(ManagerView);

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import Icons from '../Icons.jsx';
 import DateInput from '../DateInput.jsx';
 import { useSalesFormContext } from '../../contexts/SalesFormContext.jsx';
@@ -190,4 +191,4 @@ const SalesForm = (props) => {
     );
 };
 
-export default SalesForm;
+export default memo(SalesForm);
