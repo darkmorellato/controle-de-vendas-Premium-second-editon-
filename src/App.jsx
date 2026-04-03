@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
 import Icons from './components/Icons.jsx';
 import PageLoader from './components/PageLoader.tsx';
 import LoginScreen from './components/views/LoginScreen.jsx';
@@ -30,7 +30,6 @@ const CommissionModalLazy = lazy(() => import('./components/modals/CommissionMod
 const ConfirmClientUpdateModalLazy = lazy(() => import('./components/modals/ConfirmClientUpdateModal.jsx'));
 const ClientDetailsModalLazy = lazy(() => import('./components/modals/ClientDetailsModal.jsx'));
 import { db } from './firebase.js';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import {
   SELLERS_LIST, EMPLOYEES_CREDENTIALS, ADM_NAME, ADM_HASH,
   CATEGORIES_LIST, PRODUCT_TYPES, RAM_STORAGE_OPTIONS, PAYMENT_METHODS,
@@ -40,24 +39,23 @@ import {
 } from './constants.js';
 import {
   formatCurrency, formatDateBR, maskPhone, maskDateStrict, maskIMEI,
-  maskCEP, maskCPF, validateCPF, parseCurrency, getPaymentStyles,
-  verifyPassword,
+  parseCurrency, getPaymentStyles, verifyPassword,
 } from './utils.js';
-import { salesService, clientService, authService, backupService } from './services/index.js';
+import { salesService, authService, backupService } from './services/index.js';
 
 // Contexts
 import { useSalesContext } from './contexts/SalesContext.jsx';
 import { useClientContext } from './contexts/ClientContext.jsx';
 import { useUIContext } from './contexts/UIContext.jsx';
-import { useApp } from './hooks/useApp.ts';
+import { useApp } from './hooks/core/useApp.ts';
 
 const App = () => {
   const app = useApp();
   const { sales } = useSalesContext();
   const { clients } = useClientContext();
   const ui = useUIContext();
-  const { auth: authState, form, filters, notifications, handlers, appState } = app;
-  const { itemHandlers, paymentHandlers, clientHandlers } = handlers;
+  const { auth: authState, form, filters, notifications, handlers, appState, routine, clientOps } = app;
+  const { itemHandlers, paymentHandlers } = handlers;
   const {
     currentView: currentViewState, setCurrentView: setCurrentViewState,
     isOnline, handleOnline, handleOffline,
@@ -67,14 +65,16 @@ const App = () => {
     isNotificationsDropdownOpen, setIsNotificationsDropdownOpen,
   } = ui;
 
-  // Estado local restante
-  const [routineState, setRoutineState] = useState({});
-  const [reminders, setReminders] = useState([]);
-  const [managerPassword, setManagerPassword] = useState('');
-  const [pendingAuthAction, setPendingAuthAction] = useState(null);
-  const [pendingEditItem, setPendingEditItem] = useState(null);
+  // Estado local restante (appState manages: selectedClientForEdit, managerPassword, pendingAuthAction, pendingEditItem, currentReceipt, fileInputRef)
+  const {
+    managerPassword, setManagerPassword,
+    pendingAuthAction, setPendingAuthAction,
+    pendingEditItem, setPendingEditItem,
+    selectedClientForEdit, setSelectedClientForEdit,
+    currentReceipt, setCurrentReceipt,
+    fileInputRef: fileInputInternalRef,
+  } = appState;
   const [dateLockPassword, setDateLockPassword] = useState('');
-  const [selectedClientForEdit, setSelectedClientForEdit] = useState(null);
   const [selectedClientHistory, setSelectedClientHistory] = useState(null);
   const [clientDetailsData, setClientDetailsData] = useState(null);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
@@ -86,11 +86,8 @@ const App = () => {
   const performanceAvailableMonths = ['2026-04', '2026-03'];
   const [managerMonthFilter, setManagerMonthFilter] = useState(currentMonth);
   const managerAvailableMonths = ['2026-04', '2026-03'];
-  const [alertModalOpen, setAlertModalOpen] = useState(false);
-  const [alertData, setAlertData] = useState({ message: '', phase: '' });
-  const [lastAlertTime, setLastAlertTime] = useState(0);
-  const [currentReceipt, setCurrentReceipt] = useState(null);
-  const fileInputInternalRef = useRef(null);
+  const { routineState, reminders, setReminders, alertModalOpen, setAlertModalOpen, alertData, toggleRoutine } = routine;
+  const { handleCpfChange, handleZipChange, handleSaveClient, handleViewHistory, handleOpenClientData, handleClientDataChange, performClientUpdate, confirmClientUpdate } = clientOps;
 
   // Efeitos de inicialização
   useEffect(() => {
@@ -108,17 +105,6 @@ const App = () => {
       return () => clearTimeout(timer);
     }
   }, [authState.isLoggedIn, notifications.todayBirthdays.length, openModal]);
-
-  // Rotina diária (Firestore)
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const unsub = onSnapshot(
-      doc(db, 'rotina_state', today),
-      (d) => { if (d.exists()) setRoutineState(d.data()); else setRoutineState({}); },
-      (err) => console.error('Erro rotina:', err),
-    );
-    return () => unsub();
-  }, []);
 
   // Online/offline
   useEffect(() => {
@@ -162,105 +148,9 @@ const App = () => {
     }
   }, [sales, sortedSaleDates, filters.setFilterDate]);
 
-  // Alertas de rotina periódicos
-  useEffect(() => {
-    if (!authState.isLoggedIn) return;
-    const checkAlerts = () => {
-      const now = new Date();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      if (Date.now() - lastAlertTime < 15 * 60 * 1000) return;
-      const phases = [
-        { name: 'Início - Manhã', start: 570, end: 780, key: 'morning' },
-        { name: 'Meio - Tarde', start: 810, end: 990, key: 'afternoon' },
-        { name: 'Fim - Fechamento', start: 1020, end: 1110, key: 'evening' },
-      ];
-      for (const p of phases) {
-        if (currentMinutes >= p.start && currentMinutes <= p.end) {
-          if (!ROUTINE_TASKS[p.key].every((_, i) => routineState[`${p.key}-${i}`])) {
-            setAlertData({
-              phase: p.name,
-              message: `(${authState.settings.employeeName}) Não esqueça de completar suas tarefas diárias\n${p.name}\nExiste Pendências!`,
-            });
-            setAlertModalOpen(true);
-            setLastAlertTime(Date.now());
-            try { new Audio('/speech_1771176567518.mp3').play().catch(() => {}); } catch {}
-            break;
-          }
-        }
-      }
-    };
-    const interval = setInterval(checkAlerts, 60_000);
-    checkAlerts();
-    return () => clearInterval(interval);
-  }, [authState.isLoggedIn, routineState, lastAlertTime, authState.settings.employeeName]);
+  // Alertas de rotina — gerenciados pelo hook useRoutineAlerts (routine)
 
-  // Handlers de rotina
-  const toggleRoutine = useCallback((category, index) => {
-    const key = `${category}-${index}`;
-    const today = new Date().toISOString().split('T')[0];
-    const newVal = !routineState[key];
-    setDoc(doc(db, 'rotina_state', today), { [key]: newVal }, { merge: true });
-  }, [routineState]);
-
-  // Handlers de cliente / formulário
-  const handleCpfChange = useCallback((e) => {
-    const val = maskCPF(e.target.value);
-    form.setClientCpf(val);
-    if (val.replace(/\D/g, '').length === 11) {
-      const found = clients.find(
-        (c) => c.cpf && c.cpf.replace(/\D/g, '') === val.replace(/\D/g, ''),
-      );
-      if (found) { showToast('Cliente encontrado!', 'info'); form.fillClientData(found); }
-    }
-  }, [clients, showToast, form]);
-
-  const handleZipChange = useCallback(async (e) => {
-    const value = maskCEP(e.target.value);
-    form.setClientZip(value);
-    if (value.replace(/\D/g, '').length === 8) {
-      try {
-        showToast('Buscando endereço...', 'info');
-        const res = await fetch(`https://viacep.com.br/ws/${value.replace(/\D/g, '')}/json/`);
-        const data = await res.json();
-        if (!data.erro) {
-          form.setClientAddress(data.logradouro);
-          form.setClientCity(data.localidade);
-          form.setClientState(data.uf);
-          form.setClientNeighborhood(data.bairro);
-          showToast('Endereço encontrado!');
-        } else {
-          showToast('CEP não encontrado. Verifique o número.', 'error');
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Erro ao buscar o CEP. Verifique sua conexão.', 'error');
-      }
-    }
-  }, [showToast, form]);
-
-  const handleSaveClient = useCallback(() => {
-    if (!form.clientName) { showToast('Nome é obrigatório', 'error'); return; }
-    if (form.clientCpf && !validateCPF(form.clientCpf)) { showToast('CPF Inválido', 'error'); return; }
-    const existingClient = clients.find(
-      (c) =>
-        (c.cpf && form.clientCpf && c.cpf.replace(/\D/g, '') === form.clientCpf.replace(/\D/g, '')) ||
-        (c.name && form.clientName && c.name.trim().toLowerCase() === form.clientName.trim().toLowerCase()),
-    );
-    const clientId = existingClient ? existingClient.id : clientService.generateId();
-    const clientData = {
-      id: clientId, name: form.clientName, cpf: form.clientCpf,
-      phone: form.clientPhone, email: form.clientEmail, dob: form.clientDob,
-      address: form.clientAddress, number: form.clientNumber,
-      neighborhood: form.clientNeighborhood, city: form.clientCity,
-      zip: form.clientZip, state: form.clientState,
-      createdBy: existingClient ? existingClient.createdBy : authState.settings.employeeName,
-      createdAt: existingClient ? existingClient.createdAt : new Date().toISOString(),
-    };
-    clientService.save(clientData)
-      .then(() => showToast('Dados salvos!'))
-      .catch((err) => showToast('Erro: ' + err.message, 'error'));
-    return clientId;
-  }, [form, clients, authState.settings, showToast]);
+  // Handlers de cliente / formulário (vem do clientOps unificado)
 
   // Handlers de itens e pagamentos
   const handleAddItem = useCallback(() => {
@@ -452,36 +342,6 @@ const App = () => {
     }
   }, [managerPassword, pendingAuthAction, pendingEditItem, performSave, performDelete, form, closeModal, showToast]);
 
-  // Atualizar dados do cliente
-  const performClientUpdate = useCallback(async () => {
-    const originalClient = clients.find((c) => c.id === selectedClientForEdit.id);
-    const originalCpf = originalClient?.cpf ? originalClient.cpf.replace(/\D/g, '') : null;
-    const originalName = (originalClient?.name || '').trim().toLowerCase();
-    const salesToUpdate = sales.filter((s) => {
-      const saleCpf = s.clientCpf ? s.clientCpf.replace(/\D/g, '') : null;
-      return (
-        (s.clientId && s.clientId === selectedClientForEdit.id) ||
-        (originalCpf && saleCpf && originalCpf === saleCpf) ||
-        ((s.clientName || '').trim().toLowerCase() === originalName && originalName !== '')
-      );
-    });
-    try {
-      await clientService.update(selectedClientForEdit.id, selectedClientForEdit);
-      await salesService.updateClientInSales(salesToUpdate, selectedClientForEdit);
-      showToast('Dados atualizados!');
-      closeModal('confirmClientUpdate'); closeModal('clientData');
-    } catch (error) { showToast('Erro: ' + error.message, 'error'); }
-  }, [selectedClientForEdit, clients, sales, closeModal, showToast]);
-
-  const handleClientDataChange = useCallback((field, value) => {
-    setSelectedClientForEdit((prev) => ({ ...prev, [field]: value }));
-  }, []);
-
-  const confirmClientUpdate = useCallback(() => {
-    setPendingAuthAction('update_client');
-    openModal('managerAuth');
-  }, [openModal]);
-
   // Backup
   const handleExportBackup = useCallback(async () => {
     try {
@@ -514,9 +374,15 @@ const App = () => {
   const handleExportReceiptPDF = useCallback((mode) => {
     const element = document.getElementById('receipt-paper');
     if (!element) { showToast('Recibo não encontrado', 'error'); return; }
-    const clientName = currentReceipt?.clientName || 'Venda';
+    // Sanitize clientName to prevent XSS in print iframe
+    const safeClientName = (currentReceipt?.clientName || 'Venda')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
     const receiptHtml = element.outerHTML;
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo - ${clientName}</title><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0}html,body{background:#d0cdc8;display:flex;justify-content:center;padding:24px;font-family:'Plus Jakarta Sans',sans-serif}#receipt-paper{width:360px!important;overflow:hidden}img{max-width:100%}@media print{@page{size:80mm auto;margin:0}html,body{background:white;padding:0;display:block}#receipt-paper{width:80mm!important;border-radius:0!important}}</style></head><body>${receiptHtml}<script>document.fonts.ready.then(function(){setTimeout(function(){window.print()},800)})<\/script></body></html>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo - ${safeClientName}</title><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0}html,body{background:#d0cdc8;display:flex;justify-content:center;padding:24px;font-family:'Plus Jakarta Sans',sans-serif}#receipt-paper{width:360px!important;overflow:hidden}img{max-width:100%}@media print{@page{size:80mm auto;margin:0}html,body{background:white;padding:0;display:block}#receipt-paper{width:80mm!important;border-radius:0!important}}</style></head><body>${receiptHtml}<script>document.fonts.ready.then(function(){setTimeout(function(){window.print()},800)})<\/script></body></html>`;
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0;';
     document.body.appendChild(iframe);
@@ -559,24 +425,8 @@ const App = () => {
     }, 250);
   }, [filters, showToast]);
 
-  // Histórico e dados do cliente
-  const handleViewHistory = useCallback((client) => {
-    const cleanTargetCpf = client.cpf ? client.cpf.replace(/\D/g, '') : null;
-    const targetName = (client.name || '').trim().toLowerCase();
-    const clientSales = sales.filter((s) => {
-      if (s.clientId && s.clientId === client.id) return true;
-      const saleCpf = s.clientCpf ? s.clientCpf.replace(/\D/g, '') : null;
-      if (cleanTargetCpf?.length === 11) return saleCpf && cleanTargetCpf === saleCpf;
-      return (s.clientName || '').trim().toLowerCase() === targetName && !(saleCpf?.length === 11);
-    });
-    setSelectedClientHistory({ client, history: clientSales });
-    openModal('clientHistory');
-  }, [sales, openModal]);
-
-  const handleOpenClientData = useCallback((client) => {
-    setSelectedClientForEdit({ ...client });
-    openModal('clientData');
-  }, [openModal]);
+  // Histórico e dados do cliente — delegados ao clientOps
+  // handleViewHistory, handleOpenClientData, handleClientDataChange vêm de clientOps
 
   const openClientDetails = useCallback((sale) => {
     const clientData = {
@@ -757,7 +607,7 @@ const App = () => {
         ) : (
           <Suspense fallback={<PageLoader />}>
             <SalesFormProvider value={form}>
-              <SalesForm showToast={showToast} formatCurrency={formatCurrency} maskPhone={maskPhone} maskDateStrict={maskDateStrict} maskIMEI={maskIMEI} getPaymentStyles={getPaymentStyles} CATEGORIES_LIST={CATEGORIES_LIST} PRODUCT_TYPES={PRODUCT_TYPES} RAM_STORAGE_OPTIONS={RAM_STORAGE_OPTIONS} PAYMENT_METHODS={PAYMENT_METHODS} PAYMENT_TYPES={PAYMENT_TYPES} UF_LIST={UF_LIST} setClientSearchModalOpen={() => openModal('clientSearch')} setDateLockModalOpen={() => openModal('dateLock')} handleCpfChange={handleCpfChange} handleZipChange={handleZipChange} handleAddItem={itemHandlers.handleAddItem} handleEditItem={form.handleEditItem} handleAddPayment={paymentHandlers.handleAddPayment} handleEditPayment={form.handleEditPayment} handleRemovePayment={paymentHandlers.handleRemovePayment} handleSubmit={handleSubmit} handleItemPriceChange={itemHandlers.handleItemPriceChange} handlePercentChange={itemHandlers.handlePercentChange} handleDiscountValChange={itemHandlers.handleDiscountValChange} handleCurrentPaymentAmountChange={paymentHandlers.handleCurrentPaymentAmountChange} handleSaveClient={clientHandlers.handleSaveClient} />
+              <SalesForm showToast={showToast} formatCurrency={formatCurrency} maskPhone={maskPhone} maskDateStrict={maskDateStrict} maskIMEI={maskIMEI} getPaymentStyles={getPaymentStyles} CATEGORIES_LIST={CATEGORIES_LIST} PRODUCT_TYPES={PRODUCT_TYPES} RAM_STORAGE_OPTIONS={RAM_STORAGE_OPTIONS} PAYMENT_METHODS={PAYMENT_METHODS} PAYMENT_TYPES={PAYMENT_TYPES} UF_LIST={UF_LIST} setClientSearchModalOpen={() => openModal('clientSearch')} setDateLockModalOpen={() => openModal('dateLock')} handleCpfChange={handleCpfChange} handleZipChange={handleZipChange} handleAddItem={itemHandlers.handleAddItem} handleEditItem={form.handleEditItem} handleAddPayment={paymentHandlers.handleAddPayment} handleEditPayment={form.handleEditPayment} handleRemovePayment={paymentHandlers.handleRemovePayment} handleSubmit={handleSubmit} handleItemPriceChange={itemHandlers.handleItemPriceChange} handlePercentChange={itemHandlers.handlePercentChange} handleDiscountValChange={itemHandlers.handleDiscountValChange} handleCurrentPaymentAmountChange={paymentHandlers.handleCurrentPaymentAmountChange} handleSaveClient={clientOps.handleSaveClient} />
             </SalesFormProvider>
           </Suspense>
         )}
