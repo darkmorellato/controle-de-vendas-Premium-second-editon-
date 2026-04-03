@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { parseCurrency, formatCurrency } from '../utils.js';
+import { parseCurrency, formatCurrency, generateLocalId } from '../utils.js';
 import type { SaleItem, Sale, ProductType, RAMStorageOption } from '../types';
 
 interface UseItemHandlersProps {
@@ -112,7 +112,7 @@ export function useItemHandlers({
       showToast('Item atualizado!');
     } else {
       const newItem: SaleItem = {
-        id: Date.now(),
+        id: generateLocalId(),
         sequence: form.items.length + 1,
         quantity: form.newItemQty,
         type: form.newItemType || 'PRODUTO',

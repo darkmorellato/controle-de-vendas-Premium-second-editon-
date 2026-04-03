@@ -17,7 +17,14 @@ export function useFilters(sales, clients = []) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
 
-  const debounceRef = useRef(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   const handleSetSearchTerm = useCallback((val) => {
     setSearchTerm(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);

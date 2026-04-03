@@ -31,6 +31,9 @@ export const clientService = {
   },
 
   save(clientData) {
+    if (!clientData.id || typeof clientData.id !== 'string' || clientData.id.trim().length === 0) {
+      throw new Error('clientData.id is required and must be a non-empty string');
+    }
     return setDoc(doc(db, 'clientes', clientData.id), clientData);
   },
 

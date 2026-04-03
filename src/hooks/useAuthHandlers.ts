@@ -35,23 +35,24 @@ export function useAuthHandlers({
     const isValid = await authService.verifyManagerPassword(managerPassword);
     
     if (isValid) {
-      if (pendingAuthAction === 'save') {
-        performSave();
+      try {
+        if (pendingAuthAction === 'save') {
+          performSave();
+        } else if (pendingAuthAction === 'edit' && pendingEditItem) {
+          startEdit(pendingEditItem);
+        } else if (pendingAuthAction === 'delete') {
+          performDelete();
+        } else if (pendingAuthAction === 'update_client') {
+          await performClientUpdate();
+        }
+        
+        closeModal('managerAuth');
+        setManagerPassword('');
+        setPendingAuthAction(null);
+        setPendingEditItem(null);
+      } catch (error) {
+        showToast('Erro: ' + (error as Error).message, 'error');
       }
-      if (pendingAuthAction === 'edit' && pendingEditItem) {
-        startEdit(pendingEditItem);
-      }
-      if (pendingAuthAction === 'delete') {
-        performDelete();
-      }
-      if (pendingAuthAction === 'update_client') {
-        await performClientUpdate();
-      }
-      
-      closeModal('managerAuth');
-      setManagerPassword('');
-      setPendingAuthAction(null);
-      setPendingEditItem(null);
     } else {
       showToast('Senha incorreta', 'error');
     }

@@ -35,7 +35,7 @@ interface UseSaleHandlersProps {
   closeModal: (modal: string) => void;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   resetForm: () => void;
-  handleSaveClient: () => string | null | undefined;
+  handleSaveClient: () => Promise<string | null>;
 }
 
 export function useSaleHandlers({
@@ -47,8 +47,8 @@ export function useSaleHandlers({
   resetForm,
   handleSaveClient,
 }: UseSaleHandlersProps) {
-  const performSave = useCallback(() => {
-    const clientId = form.clientName ? handleSaveClient() : null;
+  const performSave = useCallback(async () => {
+    const clientId = form.clientName ? await handleSaveClient() : null;
     
     const saleId = form.editingId || salesService.generateId();
     const saleData: Sale = {
@@ -88,7 +88,7 @@ export function useSaleHandlers({
         }
         resetForm();
       })
-      .catch((err) => showToast('Erro: ' + err.message, 'error'));
+      .catch((err) => showToast('Erro: ' + (err?.message || 'desconhecido'), 'error'));
   }, [form, authSettings, showToast, openModal, resetForm, handleSaveClient]);
 
   const performDelete = useCallback(() => {
@@ -98,7 +98,7 @@ export function useSaleHandlers({
           showToast('Excluído!', 'error');
           resetForm();
         })
-        .catch((err) => showToast('Erro: ' + err.message, 'error'));
+        .catch((err) => showToast('Erro: ' + (err?.message || 'desconhecido'), 'error'));
     }
   }, [form.editingId, showToast, resetForm]);
 

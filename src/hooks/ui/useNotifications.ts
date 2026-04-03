@@ -74,7 +74,7 @@ export function useNotifications(isLoggedIn, sales, clients) {
                 if (mm === dMM && dd === dDD) {
                     const isToday = i === 0;
                     result.push({
-                        id: `bday-${c.id}`,
+                        id: `bday-${c.id || c.name || 'unknown'}-${i}`,
                         type: 'birthday',
                         priority: isToday ? 'high' : 'medium',
                         icon: '🎂',

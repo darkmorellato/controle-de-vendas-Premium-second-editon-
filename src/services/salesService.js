@@ -1,11 +1,11 @@
 import { db } from '../firebase.js';
 import {
-  collection, doc, setDoc, deleteDoc,
+  collection, doc, setDoc, deleteDoc, getDoc,
   query, where, orderBy, onSnapshot, getDocs,
   writeBatch,
 } from 'firebase/firestore';
 
-const MAX_CONTRACT_SIZE = 1 * 1024 * 1024; // 1MB (Firestore limit)
+const MAX_CONTRACT_SIZE = 5 * 1024 * 1024; // 5MB
 
 const fileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
@@ -44,11 +44,10 @@ export const salesService = {
   },
 
   async getById(saleId) {
-    const _docRef = doc(db, 'vendas', saleId);
-    const snapshot = await getDocs(query(collection(db, 'vendas'), where('__name__', '==', saleId)));
-    if (snapshot.empty) return null;
-    const d = snapshot.docs[0];
-    return { id: d.id, ...d.data() };
+    const docRef = doc(db, 'vendas', saleId);
+    const snapshot = await getDoc(docRef);
+    if (!snapshot.exists()) return null;
+    return { id: snapshot.id, ...snapshot.data() };
   },
 
   save(saleData) {

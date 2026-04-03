@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { authService } from '../../services/index.js';
 import { storageService } from '../../services/storageService.js';
 import { ADM_NAME } from '../../constants.js';
@@ -83,29 +83,30 @@ export function useAuth() {
             : `Bem-vindo, ${result.employeeName}!`,
         );
       } else {
-        const newAttempts = loginAttempts + 1;
-        setLoginAttempts(newAttempts);
-
-        if (newAttempts >= MAX_ATTEMPTS_BEFORE_LOCK) {
-          const lockMs = Math.min(
-            MAX_LOCK_MS,
-            BASE_LOCK_MS * Math.pow(2, newAttempts - MAX_ATTEMPTS_BEFORE_LOCK),
-          );
-          const lockUntil = Date.now() + lockMs;
-          setLoginLockedUntil(lockUntil);
-          saveLockout(selectedUserForLogin, lockUntil, newAttempts);
-          const secs = Math.ceil(lockMs / 1000);
-          const display = secs >= 60 ? `${Math.ceil(secs / 60)}min` : `${secs}s`;
-          showToast(
-            `${result.error} — Aguarde ${display} antes de tentar novamente.`,
-            'error',
-          );
-        } else {
-          showToast(result.error, 'error');
-        }
+        setLoginAttempts((prev) => {
+          const newAttempts = prev + 1;
+          if (newAttempts >= MAX_ATTEMPTS_BEFORE_LOCK) {
+            const lockMs = Math.min(
+              MAX_LOCK_MS,
+              BASE_LOCK_MS * Math.pow(2, newAttempts - MAX_ATTEMPTS_BEFORE_LOCK),
+            );
+            const lockUntil = Date.now() + lockMs;
+            setLoginLockedUntil(lockUntil);
+            saveLockout(selectedUserForLogin, lockUntil, newAttempts);
+            const secs = Math.ceil(lockMs / 1000);
+            const display = secs >= 60 ? `${Math.ceil(secs / 60)}min` : `${secs}s`;
+            showToast(
+              `${result.error} — Aguarde ${display} antes de tentar novamente.`,
+              'error',
+            );
+          } else {
+            showToast(result.error, 'error');
+          }
+          return newAttempts;
+        });
       }
     },
-    [loginAttempts, loginLockedUntil, loginPasswordInput, selectedUserForLogin],
+    [loginLockedUntil, loginPasswordInput, selectedUserForLogin],
   );
 
   const logout = useCallback(() => {

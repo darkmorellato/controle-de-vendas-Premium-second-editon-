@@ -5,7 +5,7 @@ import type { RoutineState } from '../types';
 
 interface UseRoutineHandlersProps {
   routineState: RoutineState;
-  setRoutineState: (state: RoutineState) => void;
+  setRoutineState: (state: RoutineState | ((prev: RoutineState) => RoutineState)) => void;
 }
 
 export function useRoutineHandlers({
@@ -15,12 +15,12 @@ export function useRoutineHandlers({
   const toggleRoutine = useCallback((category: string, index: number) => {
     const key = `${category}-${index}`;
     const today = new Date().toISOString().split('T')[0];
-    const newVal = !routineState[key];
-    setDoc(doc(db, 'rotina_state', today), { [key]: newVal }, { merge: true });
-    
-    // Atualiza o estado local imediatamente para UX responsiva
-    setRoutineState({ ...routineState, [key]: newVal });
-  }, [routineState, setRoutineState]);
+    setRoutineState((prev: RoutineState) => {
+      const newVal = !prev[key];
+      setDoc(doc(db, 'rotina_state', today), { [key]: newVal }, { merge: true });
+      return { ...prev, [key]: newVal };
+    });
+  }, [setRoutineState]);
 
   return { toggleRoutine };
 }

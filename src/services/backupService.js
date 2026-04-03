@@ -82,7 +82,7 @@ export const backupService = {
       const batch = writeBatch(db);
       chunk.forEach((op) => {
         const ref = doc(collection(db, op.col), op.id);
-        batch.set(ref, op.data);
+        batch.set(ref, op.data, { merge: true });
       });
       await batch.commit();
     }

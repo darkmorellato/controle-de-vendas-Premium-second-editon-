@@ -5,7 +5,7 @@ export const SalesFormContext = createContext(null);
 export const useSalesFormContext = () => {
   const context = useContext(SalesFormContext);
   if (!context) {
-    return null;
+    throw new Error('useSalesFormContext must be used within a SalesFormProvider');
   }
   return context;
 };

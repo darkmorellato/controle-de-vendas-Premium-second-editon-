@@ -131,13 +131,13 @@ export const formatDateBR = (dateString) => {
     const parts = dateString.split('/');
     if (parts.length !== 3) return '';
     const [day, month, year] = parts;
-    return `${day}/${month}/${year}`;
+    return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
   }
   if (dateString.includes('-')) {
     const parts = dateString.split('-');
     if (parts.length !== 3) return '';
     const [year, month, day] = parts;
-    return `${day}/${month}/${year}`;
+    return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
   }
   return dateString;
 };
@@ -313,4 +313,13 @@ export const resolveClientForSale = (sale, clients) => {
     state: sale.clientState || '',
     zip: sale.clientZip || '',
   };
+};
+
+/**
+ * Generate a unique local ID with better collision resistance than Date.now().
+ * Combines timestamp + random component to avoid collisions on rapid calls.
+ * @returns {number}
+ */
+export const generateLocalId = () => {
+  return Date.now() * 1000 + Math.floor(Math.random() * 1000);
 };

@@ -3,7 +3,7 @@
  * Merges: useClientHandlers + useClientFormHandlers + useClientDataModal
  * Single source of truth for all client-related logic.
  */
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { clientService, salesService } from '../../services/index.js';
 import { maskCPF, maskCEP, validateCPF } from '../../utils.js';
 import type { Client, Sale } from '../../types/index.ts';
@@ -65,6 +65,11 @@ export function useClientOperations({
     }
   }, [clients, showToast, form]);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const handleZipChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = maskCEP(e.target.value);
     form.setClientZip(value);
@@ -74,6 +79,8 @@ export function useClientOperations({
         showToast('Buscando endereço...', 'info');
         const res = await fetch(`https://viacep.com.br/ws/${value.replace(/\D/g, '')}/json/`);
         const data = await res.json();
+
+        if (!mountedRef.current) return;
 
         if (!data.erro) {
           form.setClientAddress(data.logradouro);
@@ -85,13 +92,14 @@ export function useClientOperations({
           showToast('CEP não encontrado. Verifique o número.', 'error');
         }
       } catch (err) {
+        if (!mountedRef.current) return;
         console.error(err);
         showToast('Erro ao buscar o CEP. Verifique sua conexão.', 'error');
       }
     }
   }, [showToast, form]);
 
-  const handleSaveClient = useCallback(() => {
+  const handleSaveClient = useCallback(async () => {
     if (!form.clientName) {
       showToast('Nome é obrigatório', 'error');
       return null;
@@ -126,9 +134,13 @@ export function useClientOperations({
       createdAt: existingClient ? existingClient.createdAt : new Date().toISOString(),
     };
 
-    clientService.save(clientData)
-      .then(() => showToast('Dados salvos!'))
-      .catch((err) => showToast('Erro: ' + err.message, 'error'));
+    try {
+      await clientService.save(clientData);
+      showToast('Dados salvos!');
+    } catch (err) {
+      showToast('Erro: ' + (err as Error).message, 'error');
+      throw err;
+    }
 
     return clientId;
   }, [form, clients, employeeName, showToast]);

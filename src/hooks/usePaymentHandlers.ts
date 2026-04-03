@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { parseCurrency, formatCurrency } from '../utils.js';
+import { parseCurrency, formatCurrency, generateLocalId } from '../utils.js';
 import type { Payment, PaymentMethod, PaymentType } from '../types';
 
 interface UsePaymentHandlersProps {
@@ -60,7 +60,7 @@ export function usePaymentHandlers({
       showToast('Pagamento atualizado!');
     } else {
       const newPayment: Payment = {
-        id: Date.now(),
+        id: generateLocalId(),
         method: form.currentPaymentMethod,
         type: form.currentPaymentType || 'Integral',
         amount: amountToAdd,

@@ -33,28 +33,32 @@ export function useHeaderCalculations({
   GOAL_MANAGER,
   ELIGIBLE_FOR_GOAL
 }: HeaderCalculationsParams) {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
+
+  const currentMonth = useMemo(() => new Date().getMonth(), []);
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const todayDate = useMemo(() => new Date().getDate(), []);
 
   const todayReminders = useMemo(() => {
     return reminders.filter(r => r.date === todayStr && !r.completed).length;
   }, [reminders, todayStr]);
 
   const recentClients = useMemo(() => {
-    const thirtyDaysAgo = new Date(now);
+    const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return clients.filter(c => {
       if (!c.createdAt) return false;
       return new Date(c.createdAt) >= thirtyDaysAgo;
     }).length;
-  }, [clients, now]);
+  }, [clients]);
 
   const sellerGoalsAtRisk = useMemo(() => {
     const SELLERS_LIST = ['Gabriela Ferreira', 'Sabrina Almeida'];
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const daysLeft = daysInMonth - now.getDate();
+    const daysLeft = daysInMonth - todayDate;
     if (daysLeft > 5) return 0;
     
     let count = 0;
@@ -74,12 +78,12 @@ export function useHeaderCalculations({
       if (units < target) count++;
     });
     return count;
-  }, [sales, currentMonth, currentYear, now, GOAL_MANAGER, GOAL_SELLERS, ELIGIBLE_FOR_GOAL]);
+  }, [sales, currentMonth, currentYear, todayDate, GOAL_MANAGER, GOAL_SELLERS, ELIGIBLE_FOR_GOAL]);
 
   const upcomingBirthdays = useMemo(() => {
     let count = 0;
     for (let i = 0; i <= 5; i++) {
-      const d = new Date(now);
+      const d = new Date();
       d.setDate(d.getDate() + i);
       const dMM = String(d.getMonth() + 1).padStart(2, '0');
       const dDD = String(d.getDate()).padStart(2, '0');
@@ -95,7 +99,7 @@ export function useHeaderCalculations({
       });
     }
     return count;
-  }, [clients, now]);
+  }, [clients]);
 
   const hasNotifications = (todayReminders > 0 || recentClients > 0 || sellerGoalsAtRisk > 0 || upcomingBirthdays > 0);
   const totalNotifications = todayReminders + recentClients + sellerGoalsAtRisk + upcomingBirthdays;

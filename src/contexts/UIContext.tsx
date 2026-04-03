@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { useModals } from '../hooks/ui/useModals';
 import type { CurrentView, ToastMessage, ModalState } from '../types';
 
@@ -35,6 +35,13 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
 
   const toastTimeouts = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const { modals, openModal, closeModal, isOpen, getModalData, dispatch } = useModals<ModalState>();
+
+  useEffect(() => {
+    return () => {
+      toastTimeouts.current.forEach((timeoutId) => clearTimeout(timeoutId));
+      toastTimeouts.current.clear();
+    };
+  }, []);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now();
