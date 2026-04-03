@@ -1,9 +1,9 @@
 import { useMemo, useCallback } from 'react';
-import { parseCurrency } from '../utils.js';
-import { useSaleMetadata } from './useSaleMetadata.js';
-import { useClientForm }   from './useClientForm.js';
-import { useItemForm }     from './useItemForm.js';
-import { usePaymentForm }  from './usePaymentForm.js';
+import { parseCurrency } from '../../utils.js';
+import { useSaleMetadata } from '../form/useSaleMetadata.js';
+import { useClientForm }   from '../form/useClientForm.js';
+import { useItemForm }     from '../form/useItemForm.js';
+import { usePaymentForm }  from '../form/usePaymentForm.js';
 
 /**
  * Coordena os 4 sub-hooks do formulário de venda.

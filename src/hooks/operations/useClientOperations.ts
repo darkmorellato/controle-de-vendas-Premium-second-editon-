@@ -1,9 +1,14 @@
+/**
+ * Unified client operations hook.
+ * Merges: useClientHandlers + useClientFormHandlers + useClientDataModal
+ * Single source of truth for all client-related logic.
+ */
 import { useCallback } from 'react';
-import { clientService, salesService } from '../services/index.js';
-import { maskCPF, maskCEP, validateCPF } from '../utils.js';
-import type { Client, Sale } from '../types';
+import { clientService, salesService } from '../../services/index.js';
+import { maskCPF, maskCEP, validateCPF } from '../../utils.js';
+import type { Client, Sale } from '../../types/index.ts';
 
-interface UseClientHandlersProps {
+interface UseClientOperationsProps {
   form: {
     clientName: string;
     clientCpf: string;
@@ -18,11 +23,11 @@ interface UseClientHandlersProps {
     clientNeighborhood: string;
     fillClientData: (client: Client) => void;
     setClientCpf: (cpf: string) => void;
+    setClientZip: (zip: string) => void;
     setClientAddress: (address: string) => void;
     setClientCity: (city: string) => void;
     setClientState: (state: string) => void;
     setClientNeighborhood: (neighborhood: string) => void;
-    setClientZip: (zip: string) => void;
   };
   clients: Client[];
   sales: Sale[];
@@ -34,7 +39,7 @@ interface UseClientHandlersProps {
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export function useClientHandlers({
+export function useClientOperations({
   form,
   clients,
   sales,
@@ -44,11 +49,11 @@ export function useClientHandlers({
   openModal,
   closeModal,
   showToast,
-}: UseClientHandlersProps) {
+}: UseClientOperationsProps) {
   const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = maskCPF(e.target.value);
     form.setClientCpf(val);
-    
+
     if (val.replace(/\D/g, '').length === 11) {
       const found = clients.find(
         (c) => c.cpf && c.cpf.replace(/\D/g, '') === val.replace(/\D/g, ''),
@@ -63,13 +68,13 @@ export function useClientHandlers({
   const handleZipChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = maskCEP(e.target.value);
     form.setClientZip(value);
-    
+
     if (value.replace(/\D/g, '').length === 8) {
       try {
         showToast('Buscando endereço...', 'info');
         const res = await fetch(`https://viacep.com.br/ws/${value.replace(/\D/g, '')}/json/`);
         const data = await res.json();
-        
+
         if (!data.erro) {
           form.setClientAddress(data.logradouro);
           form.setClientCity(data.localidade);
@@ -91,18 +96,18 @@ export function useClientHandlers({
       showToast('Nome é obrigatório', 'error');
       return null;
     }
-    
+
     if (form.clientCpf && !validateCPF(form.clientCpf)) {
       showToast('CPF Inválido', 'error');
       return null;
     }
-    
+
     const existingClient = clients.find(
       (c) =>
         (c.cpf && form.clientCpf && c.cpf.replace(/\D/g, '') === form.clientCpf.replace(/\D/g, '')) ||
         (c.name && form.clientName && c.name.trim().toLowerCase() === form.clientName.trim().toLowerCase()),
     );
-    
+
     const clientId = existingClient ? existingClient.id : clientService.generateId();
     const clientData: Client = {
       id: clientId,
@@ -120,25 +125,25 @@ export function useClientHandlers({
       createdBy: existingClient ? existingClient.createdBy : employeeName,
       createdAt: existingClient ? existingClient.createdAt : new Date().toISOString(),
     };
-    
+
     clientService.save(clientData)
       .then(() => showToast('Dados salvos!'))
       .catch((err) => showToast('Erro: ' + err.message, 'error'));
-    
+
     return clientId;
   }, [form, clients, employeeName, showToast]);
 
   const handleViewHistory = useCallback((client: Client) => {
     const cleanTargetCpf = client.cpf ? client.cpf.replace(/\D/g, '') : null;
     const targetName = (client.name || '').trim().toLowerCase();
-    
+
     const clientSales = sales.filter((s) => {
       if (s.clientId && s.clientId === client.id) return true;
       const saleCpf = s.clientCpf ? s.clientCpf.replace(/\D/g, '') : null;
       if (cleanTargetCpf?.length === 11) return saleCpf && cleanTargetCpf === saleCpf;
       return (s.clientName || '').trim().toLowerCase() === targetName && !(saleCpf?.length === 11);
     });
-    
+
     openModal('clientHistory', { client, history: clientSales });
   }, [sales, openModal]);
 
@@ -153,11 +158,11 @@ export function useClientHandlers({
 
   const performClientUpdate = useCallback(async () => {
     if (!selectedClientForEdit) return;
-    
+
     const originalClient = clients.find((c) => c.id === selectedClientForEdit.id);
     const originalCpf = originalClient?.cpf ? originalClient.cpf.replace(/\D/g, '') : null;
     const originalName = (originalClient?.name || '').trim().toLowerCase();
-    
+
     const salesToUpdate = sales.filter((s) => {
       const saleCpf = s.clientCpf ? s.clientCpf.replace(/\D/g, '') : null;
       return (
@@ -166,7 +171,7 @@ export function useClientHandlers({
         ((s.clientName || '').trim().toLowerCase() === originalName && originalName !== '')
       );
     });
-    
+
     try {
       await clientService.update(selectedClientForEdit.id, selectedClientForEdit);
       await salesService.updateClientInSales(salesToUpdate, selectedClientForEdit);

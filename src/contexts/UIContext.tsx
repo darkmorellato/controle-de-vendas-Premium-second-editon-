@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { useModals } from '../hooks/useModals';
+import { useModals } from '../hooks/ui/useModals';
 import type { CurrentView, ToastMessage, ModalState } from '../types';
 
 interface UIContextType {

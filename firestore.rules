@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Vendas ───────────────────────────────────────────────────────
+    match /vendas/{saleId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+
+      // Allow create/update only for authenticated users
+      // Validate required fields
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['id', 'date', 'employeeName', 'category', 'items', 'amount'])
+        && request.resource.data.id == saleId
+        && request.resource.data.employeeName is string
+        && request.resource.data.amount is number;
+
+      // Allow update: can modify any field but cannot change saleId
+      allow update: if request.auth != null
+        && request.resource.data.id == saleId;
+
+      // Only admins can delete sales
+      allow delete: if request.auth != null
+        && request.auth.token.admin == true;
+    }
+
+    // ─── Clientes ─────────────────────────────────────────────────────
+    match /clientes/{clientId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['id', 'name'])
+        && request.resource.data.id == clientId;
+
+      allow update: if request.auth != null
+        && request.resource.data.id == clientId;
+
+      allow delete: if request.auth != null
+        && request.auth.token.admin == true;
+    }
+
+    // ─── Contratos (PDFs em base64) ──────────────────────────────────
+    match /contratos/{contractId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['saleId', 'fileName', 'contentType'])
+        && request.resource.data.contentType == 'application/pdf'
+        // Limit file size to 1MB (base64 encoded)
+        && request.resource.data.base64Data.size() <= 1400000;
+
+      allow update: if false; // Contracts should be immutable
+      allow delete: if request.auth != null
+        && request.auth.token.admin == true;
+    }
+
+    // ─── Rotina State ────────────────────────────────────────────────
+    match /rotina_state/{date} {
+      allow read: if request.auth != null;
+
+      // Only allow updates to today's routine state
+      allow write: if request.auth != null
+        && date == request.time.toDate().format('YYYY-MM-DD');
+    }
+
+    // ─── Deny all other collections by default ───────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

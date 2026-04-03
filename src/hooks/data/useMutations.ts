@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { salesService } from '../services/salesService.js';
-import { clientService } from '../services/clientService.js';
-import type { Sale, Client } from '../types/index.ts';
+import { salesService } from '../../services/salesService.js';
+import { clientService } from '../../services/clientService.js';
+import type { Sale, Client } from '../../types/index.ts';
 
 interface SaleData {
   salesToUpdate: Sale[];

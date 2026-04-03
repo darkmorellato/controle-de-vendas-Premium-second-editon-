@@ -1,19 +1,19 @@
-import { useSalesContext } from '../contexts/SalesContext.jsx';
-import { useClientContext } from '../contexts/ClientContext.jsx';
-import { useUIContext } from '../contexts/UIContext.tsx';
-import { useAuth } from './useAuth.js';
-import { useSaleForm } from './useSaleForm.js';
-import { useFilters } from './useFilters.js';
-import { useNotifications } from './useNotifications.js';
-import { useAppState } from './useAppState.ts';
-import { useRoutineHandlers } from './useRoutineHandlers.js';
-import { useClientHandlers } from './useClientHandlers.js';
-import { useItemHandlers } from './useItemHandlers.js';
-import { usePaymentHandlers } from './usePaymentHandlers.js';
-import { useSaleHandlers } from './useSaleHandlers.js';
-import { useAuthHandlers } from './useAuthHandlers.js';
-import { usePrintHandlers } from './usePrintHandlers.js';
-import { useBackupHandlers } from './useBackupHandlers.js';
+import { useSalesContext } from '../../contexts/SalesContext.jsx';
+import { useClientContext } from '../../contexts/ClientContext.jsx';
+import { useUIContext } from '../../contexts/UIContext.tsx';
+import { useAuth } from './useAuth.ts';
+import { useSaleForm } from './useSaleForm.ts';
+import { useFilters } from '../ui/useFilters.ts';
+import { useNotifications } from '../ui/useNotifications.ts';
+import { useAppState } from '../ui/useAppState.ts';
+import { useRoutineAlerts } from '../operations/useRoutineAlerts.ts';
+import { useClientOperations } from '../operations/useClientOperations.ts';
+import { useItemHandlers } from '../useItemHandlers.js';
+import { usePaymentHandlers } from '../usePaymentHandlers.js';
+import { useSaleHandlers } from '../useSaleHandlers.js';
+import { useAuthHandlers } from '../useAuthHandlers.js';
+import { usePrintHandlers } from '../usePrintHandlers.js';
+import { useBackupHandlers } from '../useBackupHandlers.js';
 
 export function useApp() {
   const { sales, loading: salesLoading } = useSalesContext();
@@ -23,19 +23,21 @@ export function useApp() {
   const form = useSaleForm();
   const filters = useFilters(sales, clients);
   const notifications = useNotifications(auth.isLoggedIn, sales, clients);
-  const appState = useAppState({ 
-    sales, 
-    clients, 
-    isLoggedIn: auth.isLoggedIn, 
-    employeeName: auth.settings.employeeName 
+  const appState = useAppState({
+    sales,
+    clients,
+    isLoggedIn: auth.isLoggedIn,
+    employeeName: auth.settings.employeeName
   });
 
-  const { toggleRoutine } = useRoutineHandlers({
-    routineState: appState.routineState,
-    setRoutineState: appState.setRoutineState,
+  // Unified routine + alerts (was 3 separate implementations)
+  const routine = useRoutineAlerts({
+    isLoggedIn: auth.isLoggedIn,
+    employeeName: auth.settings.employeeName,
   });
 
-  const clientHandlers = useClientHandlers({
+  // Unified client operations (was 3 separate handlers)
+  const clientOps = useClientOperations({
     form: {
       clientName: form.clientName,
       clientCpf: form.clientCpf,
@@ -150,7 +152,7 @@ export function useApp() {
     closeModal: ui.closeModal,
     showToast: ui.showToast,
     resetForm: form.resetForm,
-    handleSaveClient: clientHandlers.handleSaveClient,
+    handleSaveClient: clientOps.handleSaveClient,
   });
 
   const { handleManagerAuth } = useAuthHandlers({
@@ -161,7 +163,7 @@ export function useApp() {
     showToast: ui.showToast,
     performSave: saleHandlers.performSave,
     performDelete: saleHandlers.performDelete,
-    performClientUpdate: clientHandlers.performClientUpdate,
+    performClientUpdate: clientOps.performClientUpdate,
     startEdit: form.startEdit,
     setManagerPassword: appState.setManagerPassword,
     setPendingAuthAction: appState.setPendingAuthAction,
@@ -197,9 +199,9 @@ export function useApp() {
     filters,
     notifications,
     appState,
+    routine,
+    clientOps,
     handlers: {
-      toggleRoutine,
-      clientHandlers,
       itemHandlers,
       paymentHandlers,
       saleHandlers,

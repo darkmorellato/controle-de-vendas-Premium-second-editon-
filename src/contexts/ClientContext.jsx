@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { useClientsQuery } from '../hooks/useClientsQuery.ts';
+import { useClientsQuery } from '../hooks/data/useClientsQuery.ts';
 
 const ClientContext = createContext(null);
 

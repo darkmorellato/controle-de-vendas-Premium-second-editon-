@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { salesService } from '../services';
-import { SALES_WINDOW_DAYS } from '../constants';
+import { salesService } from '../../services';
+import { SALES_WINDOW_DAYS } from '../../constants';
 
 export function useSalesQuery() {
   const cutoffDate = (() => {

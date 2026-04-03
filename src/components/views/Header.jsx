@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Icons from '../Icons.jsx';
 import { HeaderClock } from '../Clock.jsx';
 import NotificationsDropdown from '../NotificationsDropdown.jsx';
-import { useHeaderCalculations } from '../../hooks/useHeaderCalculations.ts';
+import { useHeaderCalculations } from '../../hooks/ui/useHeaderCalculations.ts';
 
 export default function Header({
     settings,

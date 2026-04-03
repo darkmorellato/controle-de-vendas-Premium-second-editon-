@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { clientService } from '../services';
+import { clientService } from '../../services';
 
 export function useClientsQuery() {
   return useQuery({

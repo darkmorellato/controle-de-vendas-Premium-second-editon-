@@ -158,6 +158,24 @@ export interface BackupResult {
   error?: string;
 }
 
+// ─── storageService ──────────────────────────────────────────────────────────
+
+export interface AppStore {
+  version: number;
+  settings: AuthSettings;
+  reminders: Reminder[];
+  theme: string;
+}
+
+export interface Reminder {
+  id: string;
+  date?: string;
+  time?: string;
+  type?: string;
+  description: string;
+  completed?: boolean;
+}
+
 export type FormCategory = 
   | 'Venda a vista' 
   | 'Crediario Payjoy' 

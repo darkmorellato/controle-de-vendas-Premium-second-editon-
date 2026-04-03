@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import { authService } from '../services/index.js';
-import { storageService } from '../services/storageService.js';
-import { ADM_NAME } from '../constants.js';
+import { authService } from '../../services/index.js';
+import { storageService } from '../../services/storageService.js';
+import { ADM_NAME } from '../../constants.js';
 
 const MAX_ATTEMPTS_BEFORE_LOCK = 3;
 const BASE_LOCK_MS = 2_000;

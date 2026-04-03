@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Contratos PDF ──────────────────────────────────────────────
+    match /contratos/{saleId}/{fileName} {
+      // Only authenticated users can read
+      allow read: if request.auth != null;
+
+      // Only authenticated users can upload PDF files
+      allow write: if request.auth != null
+        && request.resource.contentType == 'application/pdf'
+        && request.resource.size < 5 * 1024 * 1024; // 5MB max
+
+      // Only admins can delete
+      allow delete: if request.auth != null
+        && request.auth.token.admin == true;
+    }
+
+    // ─── Deny all other paths ───────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

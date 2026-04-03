@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { SELLERS_LIST, ELIGIBLE_FOR_GOAL, GOAL_SELLERS, GOAL_MANAGER } from '../constants.js';
-import { countUnits } from '../utils.js'; // S-4: usando a versão canônica de utils.js
+import { SELLERS_LIST, ELIGIBLE_FOR_GOAL, GOAL_SELLERS, GOAL_MANAGER } from '../../constants.js';
+import { countUnits } from '../../utils.js'; // S-4: usando a versão canônica de utils.js
 
 function parseDob(dob) {
     if (!dob) return { mm: null, dd: null };

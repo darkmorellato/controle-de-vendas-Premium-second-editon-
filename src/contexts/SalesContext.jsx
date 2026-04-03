@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { useSalesQuery } from '../hooks/useSalesQuery.ts';
+import { useSalesQuery } from '../hooks/data/useSalesQuery.ts';
 
 const SalesContext = createContext(null);
 
