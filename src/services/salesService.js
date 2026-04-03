@@ -1,20 +1,14 @@
-import { db } from '../firebase.js';
+import { db, storage } from '../firebase.js';
 import {
   collection, doc, setDoc, deleteDoc, getDoc,
   query, where, orderBy, onSnapshot, getDocs,
   writeBatch,
 } from 'firebase/firestore';
+import {
+  ref, uploadBytes, getDownloadURL, deleteObject,
+} from 'firebase/storage';
 
 const MAX_CONTRACT_SIZE = 5 * 1024 * 1024; // 5MB
-
-const fileToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-};
 
 export const salesService = {
   subscribe(cutoffStr, onUpdate, onError) {
@@ -103,29 +97,35 @@ export const salesService = {
       throw new Error('O arquivo deve ter no máximo 5MB');
     }
 
-    // Convert PDF to Base64 and store in Firestore
-    const base64Data = await fileToBase64(file);
-    
-    // Save contract to a separate collection for backup
+    // Upload to Firebase Cloud Storage (not Base64 in Firestore)
+    const storageRef = ref(storage, `contratos/${saleId}.pdf`);
+    await uploadBytes(storageRef, file);
+    const downloadUrl = await getDownloadURL(storageRef);
+
+    // Save metadata in Firestore (not the file itself)
     await setDoc(doc(db, 'contratos', saleId), {
       saleId,
       fileName: file.name,
       fileSize: file.size,
       contentType: file.type,
-      base64Data,
+      storagePath: `contratos/${saleId}.pdf`,
+      downloadUrl,
       createdAt: new Date().toISOString(),
     });
 
-    // Return a data URL that can be used directly (works for PDFs)
-    return base64Data;
+    return downloadUrl;
   },
 
   async deleteContract(saleId) {
     try {
+      // Delete from Storage
+      const storageRef = ref(storage, `contratos/${saleId}.pdf`);
+      await deleteObject(storageRef).catch(() => {}); // ignore if not found
+      // Delete metadata from Firestore
       await deleteDoc(doc(db, 'contratos', saleId));
       return true;
     } catch (error) {
-      if (error.code === 'not-found') {
+      if (error.code === 'storage/object-not-found' || error.code === 'not-found') {
         return false;
       }
       throw error;
