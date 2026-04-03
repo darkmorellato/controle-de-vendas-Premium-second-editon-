@@ -4,7 +4,7 @@ import { useSalesFormContext } from '../../contexts/SalesFormContext.jsx';
 
 const SalesForm = (props) => {
     const ctx = useSalesFormContext();
-    const form = ctx || props || {};
+    const form = { ...ctx, ...props };
     
     const {
         date = '', setDate = () => {}, isDateLocked = false, setDateLockModalOpen = () => {}, setIsDateLocked = () => {},
