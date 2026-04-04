@@ -53,3 +53,7 @@ workbox-*.js
 # Cache
 .cache/
 .eslintcache
+
+# Security-sensitive scripts
+scripts/service-account-key.json
+scripts/*.cjs

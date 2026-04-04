@@ -20,6 +20,13 @@ service cloud.firestore {
         (isAdmin() || isManager() || request.auth.token.employeeName == employeeName);
     }
 
+    // ─── Helper: format date as YYYY-MM-DD ─────────────────────────────
+    function dateToString(t) {
+      return string(t.year) + '-' +
+             (t.month < 10 ? '0' : '') + string(t.month) + '-' +
+             (t.day < 10 ? '0' : '') + string(t.day);
+    }
+
     // ─── Vendas ───────────────────────────────────────────────────────
     match /vendas/{saleId} {
       // Employees see only their own sales; admins/managers see all
@@ -82,9 +89,7 @@ service cloud.firestore {
       // Only allow updates to today's routine state
       // Firestore Rules uses timestamp.date() for date comparison
       allow write: if request.auth != null
-        && date == string(request.time.year) + '-' +
-             string(request.time.month).padStart(2, '0') + '-' +
-             string(request.time.day).padStart(2, '0');
+        && date == dateToString(request.time);
     }
 
     // ─── System Logs ─────────────────────────────────────────────────
