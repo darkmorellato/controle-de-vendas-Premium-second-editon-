@@ -30,6 +30,9 @@ export default defineConfig([
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^(set)?[A-Z_]|^e$|^i$|^idx$|^_', argsIgnorePattern: '^_' }],
       'no-undef': 'error',
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'no-new-func': 'error',
       'react-hooks/exhaustive-deps': 'error',
       'react-refresh/only-export-components': 'warn',
       'no-empty': 'error',

@@ -35,8 +35,8 @@ export const EMPLOYEES_CREDENTIALS = {
   'Sabrina Almeida': import.meta.env.VITE_HASH_SABRINA,
 };
 
-/** @type {string} */
-export const ADM_NAME = import.meta.env.VITE_ADM_NAME || 'Dark Morellato';
+/** @type {string | undefined} */
+export const ADM_NAME = import.meta.env.VITE_ADM_NAME;
 
 /**
  * Hash de senha do administrador.

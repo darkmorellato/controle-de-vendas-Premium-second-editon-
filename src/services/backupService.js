@@ -2,6 +2,26 @@ import { db } from '../firebase.js';
 import { collection, doc, writeBatch } from 'firebase/firestore';
 import { storageService } from './storageService.js';
 
+const isValidCPF = (cpf) => typeof cpf === 'string' && cpf.length >= 11;
+
+const validateSale = (s) => {
+  if (!s || typeof s !== 'object') return false;
+  if (typeof s.id !== 'string' || s.id.length === 0) return false;
+  if (typeof s.date !== 'string') return false;
+  if (typeof s.employeeName !== 'string' || s.employeeName.length === 0) return false;
+  if (!Array.isArray(s.items)) return false;
+  if (typeof s.amount !== 'number' || isNaN(s.amount)) return false;
+  return true;
+};
+
+const validateClient = (c) => {
+  if (!c || typeof c !== 'object') return false;
+  if (typeof c.id !== 'string' || c.id.length === 0) return false;
+  if (typeof c.name !== 'string' || c.name.length === 0) return false;
+  if (c.cpf && !isValidCPF(c.cpf)) return false;
+  return true;
+};
+
 export const backupService = {
   async exportToFile(sales, clients, settings) {
     const reminders = storageService.load().reminders;
@@ -54,13 +74,15 @@ export const backupService = {
 
     loadedDataList.forEach((data) => {
       if (data.sales && Array.isArray(data.sales)) {
-        // S-7 fix: validar estrutura mínima antes de importar
-        const validSales = data.sales.filter((s) => s && typeof s.id === 'string' && s.id.length > 0);
+        const validSales = data.sales.filter(validateSale);
         validSales.forEach((s) => allOps.push({ col: 'vendas', id: s.id, data: s }));
       }
       if (data.clients && Array.isArray(data.clients)) {
-        // S-7 fix: validar estrutura mínima antes de importar
-        const validClients = data.clients.filter((c) => c && typeof c.id === 'string' && c.id.length > 0);
+        const validClients = data.clients.filter(validateClient);
+        validClients.forEach((c) => allOps.push({ col: 'clientes', id: c.id, data: c }));
+      }
+      if (data.clients && Array.isArray(data.clients)) {
+        const validClients = data.clients.filter(validateClient);
         validClients.forEach((c) => allOps.push({ col: 'clientes', id: c.id, data: c }));
       }
       if (data.reminders && Array.isArray(data.reminders) && data.reminders.length > 0) {

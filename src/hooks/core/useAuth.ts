@@ -8,20 +8,43 @@ const BASE_LOCK_MS = 2_000;
 const MAX_LOCK_MS = 300_000; // 5 minutos
 const LOCKOUT_STORAGE_KEY = 'login_lockout_state';
 
-/** Persiste estado de lockout no localStorage para sobreviver a recargas de página. */
-const saveLockout = (user, until, attempts) => {
+const LOCKOUT_HMAC_KEY = 'lockout_integrity_v1';
+
+const generateLockoutHmac = async (user: string, until: number, attempts: number) => {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(LOCKOUT_HMAC_KEY + user),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    enc.encode(`${user}:${until}:${attempts}`),
+  );
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
+};
+
+const saveLockout = async (user: string, until: number, attempts: number) => {
   try {
-    localStorage.setItem(LOCKOUT_STORAGE_KEY, JSON.stringify({ user, until, attempts }));
+    const hmac = await generateLockoutHmac(user, until, attempts);
+    localStorage.setItem(LOCKOUT_STORAGE_KEY, JSON.stringify({ user, until, attempts, hmac }));
   } catch {}
 };
 
-/** Lê e valida lockout persistido. Retorna null se não houver lockout ativo. */
-const loadLockout = (user) => {
+const loadLockout = async (user: string) => {
   try {
     const raw = localStorage.getItem(LOCKOUT_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed.user === user && parsed.until > Date.now()) return parsed;
+    if (parsed.user !== user) return null;
+    if (parsed.until <= Date.now()) return null;
+    if (typeof parsed.until !== 'number' || typeof parsed.attempts !== 'number') return null;
+    const expectedHmac = await generateLockoutHmac(user, parsed.until, parsed.attempts);
+    if (parsed.hmac !== expectedHmac) return null;
+    return parsed;
   } catch {}
   return null;
 };
@@ -43,11 +66,10 @@ export function useAuth() {
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [loginLockedUntil, setLoginLockedUntil] = useState(0);
 
-  const handleLoginClick = useCallback((name) => {
+  const handleLoginClick = useCallback(async (name) => {
     setSelectedUserForLogin(name);
     setLoginPasswordInput('');
-    // Ao abrir o modal, verifica lockout persistido para esse usuário
-    const existing = loadLockout(name);
+    const existing = await loadLockout(name);
     if (existing) {
       setLoginAttempts(existing.attempts);
       setLoginLockedUntil(existing.until);

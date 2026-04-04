@@ -38,6 +38,25 @@ export const validateCPF = (cpf) => {
 // ─── Hashing interno ────────────────────────────────────────────────────────
 
 /**
+ * Constant-time string comparison to prevent timing attacks.
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
+const constantTimeCompare = (a, b) => {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
+  const enc = new TextEncoder();
+  const aBytes = enc.encode(a);
+  const bBytes = enc.encode(b);
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    diff |= aBytes[i] ^ bBytes[i];
+  }
+  return diff === 0;
+};
+
+/**
  * SHA-256 legado (mantido apenas para verificar hashes antigos armazenados nas env vars).
  * Não use para gerar novos hashes — use hashPassword.
  * @param {string} plain
@@ -90,7 +109,7 @@ export const verifyPassword = async (plain, stored) => {
   // Formato legado: hash SHA-256 de 64 caracteres sem prefixo
   if (!stored.includes(':')) {
     const computed = await legacySHA256(plain);
-    return computed === stored;
+    return constantTimeCompare(computed, stored);
   }
 
   // Formato novo: "pbkdf2:<saltHex>:<hashHex>"
@@ -113,7 +132,7 @@ export const verifyPassword = async (plain, stored) => {
   const computedHash = Array.from(new Uint8Array(bits))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-  return computedHash === storedHash;
+  return constantTimeCompare(computedHash, storedHash);
 };
 
 // ─── Formatação de datas ─────────────────────────────────────────────────────
@@ -316,10 +335,10 @@ export const resolveClientForSale = (sale, clients) => {
 };
 
 /**
- * Generate a unique local ID with better collision resistance than Date.now().
- * Combines timestamp + random component to avoid collisions on rapid calls.
- * @returns {number}
+ * Generate a unique local ID using cryptographically secure UUID.
+ * @deprecated Use generateUUID() instead. Kept for backward compatibility.
+ * @returns {string}
  */
 export const generateLocalId = () => {
-  return Date.now() * 1000 + Math.floor(Math.random() * 1000);
+  return generateUUID();
 };
