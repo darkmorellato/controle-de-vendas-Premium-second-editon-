@@ -40,14 +40,15 @@ service cloud.firestore {
         && request.auth.token.admin == true;
     }
 
-    // ─── Contratos (metadados — PDFs reais no Firebase Storage) ──────────────
+    // ─── Contratos (PDFs em base64) ──────────────────────────────────
     match /contratos/{contractId} {
       allow read: if request.auth != null;
 
       allow create: if request.auth != null
-        && request.resource.data.keys().hasAll(['saleId', 'fileName', 'contentType', 'storagePath'])
+        && request.resource.data.keys().hasAll(['saleId', 'fileName', 'contentType'])
         && request.resource.data.contentType == 'application/pdf'
-        && request.resource.data.saleId == contractId;
+        // Limit file size to 1MB (base64 encoded)
+        && request.resource.data.base64Data.size() <= 1400000;
 
       allow update: if false; // Contracts should be immutable
       allow delete: if request.auth != null
