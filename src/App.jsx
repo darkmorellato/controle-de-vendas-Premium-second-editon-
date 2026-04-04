@@ -74,7 +74,6 @@ const App = () => {
     fileInputRef: fileInputInternalRef,
   } = appState;
   const [dateLockPassword, setDateLockPassword] = useState('');
-  const [selectedClientHistory, setSelectedClientHistory] = useState(null);
   const [clientDetailsData, setClientDetailsData] = useState(null);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [sellerFilter, setSellerFilter] = useState('todos');
@@ -470,7 +469,7 @@ const App = () => {
         <ClientSearchModalLazy isOpen={modals.clientSearch?.open} onClose={() => closeModal('clientSearch')} searchTerm={clientSearchTerm} setSearchTerm={setClientSearchTerm} filteredClients={filteredClients} onSelectClient={(c) => { form.fillClientData(c); closeModal('clientSearch'); }} />
       </Suspense>
       <Suspense fallback={null}>
-        <ClientHistoryModalLazy isOpen={modals.clientHistory?.open} onClose={() => closeModal('clientHistory')} selectedClientHistory={selectedClientHistory} openReceipt={printHandlers.openReceipt} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
+        <ClientHistoryModalLazy isOpen={modals.clientHistory?.open} onClose={() => closeModal('clientHistory')} selectedClientHistory={modals.clientHistory?.data || null} openReceipt={printHandlers.openReceipt} formatCurrency={formatCurrency} formatDateBR={formatDateBR} />
       </Suspense>
       <Suspense fallback={null}>
         <BirthdayAlertModalLazy isOpen={notifications.todayBirthdays.length > 0 && modals.birthdayAlert?.open} onClose={() => closeModal('birthdayAlert')} todayBirthdays={notifications.todayBirthdays} />
